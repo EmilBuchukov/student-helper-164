@@ -39,6 +39,7 @@ UI language is Bulgarian (`APP_LOCALE=bg`), timezone `Europe/Sofia`.
 - Open the project from WSL with `code .` (VS Code + "WSL" extension).
 - If `docker` is "command not found" inside Ubuntu, Docker Desktop's WSL integration is not enabled for that distro — enable it and restart the terminal.
 - `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` → your WSL user isn't in the `docker` group: `sudo usermod -aG docker $USER`, then `wsl --shutdown` (PowerShell) and reopen Ubuntu; `docker ps` should work without sudo. With Docker Desktop also make sure it is running and WSL integration is on for your distro.
+- `http://localhost` shows the **Apache default page** → Apache is running in WSL and holds port 80 (often pulled in by `apt install php…` without `-cli`). Run `sudo service apache2 stop && sudo systemctl disable apache2` (or `sudo apt remove apache2`), then `sail down && sail up -d`. Alternatively set `APP_PORT=8080` in `.env` and open http://localhost:8080. Native path uses http://localhost:8000.
 - Port 5432 already in use? A native PostgreSQL is running in WSL (`sudo service postgresql stop`) or set `FORWARD_DB_PORT=5433` in `.env`.
 - Hot reload not picking up changes → you're probably on `/mnt/c`.
 
