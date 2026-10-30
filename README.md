@@ -1,7 +1,8 @@
 # 164 ГПИЕ — ученическа платформа
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
-This repository currently contains the **foundation**: project setup, database structure for the school, and whitelist-restricted registration/login. Exams, Q&A, rooms, clubs and student channels are placeholders only ("Очаквайте скоро").
+Features: whitelist-restricted registration/login, exams & study materials (see [Features](#features)).
+Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
 
@@ -151,6 +152,51 @@ The seeder creates unclaimed rows `newstudent1@example.com` … `newstudent8@exa
 New accounts must verify their email before reaching the dashboard (link in Mailpit or in `storage/logs/laravel.log`).
 
 ---
+
+## Features
+
+### Audience scoping (shared)
+
+Exams (and later questions and channels) target an audience via two columns: `scope_type` (`grade` | `class` | `profile`) and `scope_id`.
+`App\Models\Concerns\HasAudienceScope` provides:
+
+- `Model::query()->visibleTo($user)` — only items for the user's class, grade or profile;
+- `$model->isVisibleTo($user)`, `$model->audienceLabel()` and a `scope()` morphTo relation (eager-load it on lists);
+- per-model hooks: `audienceSeesAll()` (default: admins + moderators), `audienceHiddenFrom()`, `audienceIncludesUnscoped()`.
+
+`App\Support\Audience` has `scopesFor($user)`, `userBelongsTo($user, $type, $id)` and `options()` for select boxes
+(values are encoded as `"class:5"` and validated with `App\Rules\AudienceScopeRule`). The scope types double as morph aliases
+(`Relation::enforceMorphMap` in `AppServiceProvider`).
+
+### Exams & materials (`/exams`)
+
+- List with upcoming exams first (soonest first), then past exams; filters by subject, date range and audience.
+- Students/moderators create exams for their own class, grade or profile; admins and teachers for any audience.
+  Creator, moderators and admins can edit/delete.
+- Teachers see all exams and can download materials, but cannot upload (materials are a student space).
+- Materials: pdf, docx, pptx, xlsx, txt, png, jpg (max 10 MB). The server checks the detected MIME type, the extension,
+  and that both match. Files are stored under a random name in `materials/{exam_id}/` and only downloaded through
+  `GET /materials/{id}/download`, which checks authorization and sends the original filename. Uploads are rate limited (10/min).
+
+### File storage (local / S3-compatible)
+
+All uploads go through Laravel's `Storage` facade on the disk from `FILESYSTEM_DISK` (or `MATERIALS_DISK` to override it for materials).
+
+- **Local (default):** `FILESYSTEM_DISK=local` → `storage/app/private` (not web-accessible; the local disk's `serve` option is off).
+- **S3-compatible (production, ephemeral filesystem):** the `league/flysystem-aws-s3-v3` driver is installed; set
+
+  ```dotenv
+  FILESYSTEM_DISK=s3
+  AWS_ACCESS_KEY_ID=...
+  AWS_SECRET_ACCESS_KEY=...
+  AWS_DEFAULT_REGION=auto            # or e.g. eu-central-1
+  AWS_BUCKET=school164-materials
+  AWS_ENDPOINT=https://<account>.r2.cloudflarestorage.com   # empty for AWS S3
+  AWS_USE_PATH_STYLE_ENDPOINT=false  # true for MinIO
+  ```
+
+  Keep the bucket **private**; downloads are streamed through the app after the authorization check.
+  Switching disks does not migrate existing files.
 
 ## Tests & checks
 

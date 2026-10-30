@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\StudentImportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Exams\ExamController;
+use App\Http\Controllers\Exams\MaterialController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -15,7 +17,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Placeholder sections, built in later iterations.
-foreach (['exams', 'questions', 'rooms', 'clubs'] as $section) {
+foreach (['questions', 'rooms', 'clubs'] as $section) {
     Route::get("/{$section}", fn () => Inertia::render('ComingSoon', ['section' => "nav.{$section}"]))
         ->name($section);
 }
@@ -23,6 +25,13 @@ foreach (['exams', 'questions', 'rooms', 'clubs'] as $section) {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+
+    // Exams & materials
+    Route::resource('exams', ExamController::class);
+    Route::post('/exams/{exam}/materials', [MaterialController::class, 'store'])
+        ->middleware('throttle:uploads')->name('exams.materials.store');
+    Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
+    Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

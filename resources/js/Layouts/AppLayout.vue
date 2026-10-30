@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
+import FlashMessage from '@/Components/FlashMessage.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import SiteFooter from '@/Components/SiteFooter.vue';
@@ -31,7 +32,7 @@ const showingMenu = ref(false);
                                 v-for="item in mainNav"
                                 :key="item.route"
                                 :href="route(item.route)"
-                                :active="route().current(item.route)"
+                                :active="route().current(item.active ?? item.route)"
                             >
                                 {{ $t(item.label) }}
                             </NavLink>
@@ -154,7 +155,7 @@ const showingMenu = ref(false);
                         v-for="item in mainNav"
                         :key="item.route"
                         :href="route(item.route)"
-                        :active="route().current(item.route)"
+                        :active="route().current(item.active ?? item.route)"
                     >
                         {{ $t(item.label) }}
                     </ResponsiveNavLink>
@@ -188,7 +189,7 @@ const showingMenu = ref(false);
                                 v-for="item in adminNav"
                                 :key="item.route"
                                 :href="route(item.route)"
-                                :active="route().current(item.route)"
+                                :active="route().current(item.active ?? item.route)"
                             >
                                 {{ $t(item.label) }}
                             </ResponsiveNavLink>
@@ -220,6 +221,12 @@ const showingMenu = ref(false);
         </header>
 
         <main class="flex-1">
+            <div
+                v-if="$page.props.flash?.success || $page.props.flash?.error"
+                class="mx-auto max-w-7xl space-y-2 px-4 pt-4 sm:px-6 lg:px-8"
+            >
+                <FlashMessage />
+            </div>
             <slot />
         </main>
 

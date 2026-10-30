@@ -33,7 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Private files (exam materials) are only served through authorized controllers.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
