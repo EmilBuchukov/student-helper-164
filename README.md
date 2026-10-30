@@ -1,7 +1,7 @@
 # 164 ГПИЕ — ученическа платформа
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
-Features: whitelist-restricted registration/login, exams & study materials (see [Features](#features)).
+Features: whitelist-restricted registration/login, exams & study materials, Q&A (see [Features](#features)).
 Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
@@ -177,6 +177,20 @@ Exams (and later questions and channels) target an audience via two columns: `sc
 - Materials: pdf, docx, pptx, xlsx, txt, png, jpg (max 10 MB). The server checks the detected MIME type, the extension,
   and that both match. Files are stored under a random name in `materials/{exam_id}/` and only downloaded through
   `GET /materials/{id}/download`, which checks authorization and sends the original filename. Uploads are rate limited (10/min).
+
+### Q&A (`/questions`) — students only
+
+- Questions are school-wide (no scope) or targeted at the author's class/grade/profile (admins: any). Same `visibleTo()` scoping as exams.
+- **Teachers are denied completely**: the `no-teachers` route middleware (`DenyTeachers`) returns 403 on every Q&A/report route,
+  and `QuestionPolicy`/`AnswerPolicy` + `Question::audienceHiddenFrom()` also deny them (defence in depth).
+- Answers, toggleable upvotes (`votes`, one per user/item, not on own content), one accepted answer per question (author toggles it).
+- List: search, subject/audience filters, sort by newest / most voted / unresolved.
+- **Search uses `ILIKE`** on title + body (escaped `%`/`_`). Chosen over PostgreSQL full-text search because PostgreSQL ships no
+  Bulgarian stemmer, users search for partial words, and the data volume of one school is small. If it grows, add a `pg_trgm` GIN index.
+- Users edit/delete their own questions/answers; moderators and admins can delete anything (soft deletes, restorable later).
+- **Reports** (`reports` table, shared with channel messages): reason required, at most one *open* report per user and item
+  (validated + partial unique index `reports_one_open_per_user`).
+- Rate limits per user: questions 5/min, answers 10/min, votes 60/min, reports 10/min.
 
 ### File storage (local / S3-compatible)
 

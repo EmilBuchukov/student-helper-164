@@ -38,4 +38,4 @@ test('guests see the Bulgarian landing page and logged in users are redirected t
 
 test('placeholder sections render the coming soon page', function (string $path) {
     $this->get($path)->assertOk()->assertInertia(fn (Assert $page) => $page->component('ComingSoon'));
-})->with(['/questions', '/rooms', '/clubs']);
+})->with(['/rooms', '/clubs']);

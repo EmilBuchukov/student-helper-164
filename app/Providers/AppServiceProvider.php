@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Grade;
 use App\Models\Material;
 use App\Models\Profile;
+use App\Models\Question;
+use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -40,9 +43,17 @@ class AppServiceProvider extends ServiceProvider
             'profile' => Profile::class,
             'exam' => Exam::class,
             'material' => Material::class,
+            'question' => Question::class,
+            'answer' => Answer::class,
+            'report' => Report::class,
         ]);
 
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        $perUser = fn (Request $request) => $request->user()?->id ?: $request->ip();
+        RateLimiter::for('questions', fn (Request $request) => Limit::perMinute(5)->by($perUser($request)));
+        RateLimiter::for('answers', fn (Request $request) => Limit::perMinute(10)->by($perUser($request)));
+        RateLimiter::for('votes', fn (Request $request) => Limit::perMinute(60)->by($perUser($request)));
+        RateLimiter::for('reports', fn (Request $request) => Limit::perMinute(10)->by($perUser($request)));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
     }
 }

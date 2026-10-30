@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\DenyTeachers;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'no-teachers' => DenyTeachers::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
