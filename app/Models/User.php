@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -36,6 +38,22 @@ class User extends Authenticatable implements MustVerifyEmail
     public function allowedStudent(): HasOne
     {
         return $this->hasOne(AllowedStudent::class, 'claimed_by');
+    }
+
+    /**
+     * @return BelongsToMany<Club, $this>
+     */
+    public function clubs(): BelongsToMany
+    {
+        return $this->belongsToMany(Club::class, 'club_members')->withPivot('joined_at');
+    }
+
+    /**
+     * @return HasMany<Club, $this>
+     */
+    public function ledClubs(): HasMany
+    {
+        return $this->hasMany(Club::class, 'leader_id');
     }
 
     public function hasRole(Role|string ...$roles): bool
