@@ -1,7 +1,7 @@
 # 164 ГПИЕ — ученическа платформа
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
-Features: whitelist-restricted registration/login, exams & study materials, Q&A (see [Features](#features)).
+Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events (see [Features](#features)).
 Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
@@ -191,6 +191,16 @@ Exams (and later questions and channels) target an audience via two columns: `sc
 - **Reports** (`reports` table, shared with channel messages): reason required, at most one *open* report per user and item
   (validated + partial unique index `reports_one_open_per_user`).
 - Rate limits per user: questions 5/min, answers 10/min, votes 60/min, reports 10/min.
+
+### Clubs & events (`/clubs`, `/events`)
+
+- Clubs (`slug` URLs, generated from the Bulgarian name) with an optional leader (a student/moderator) and `is_active`.
+  Inactive clubs are visible only to admins and their leader.
+- **Admins** create/edit/delete clubs and any event, including **school-wide events** (`club_id = null`).
+  A **club leader** creates/edits/deletes events of their own club only (`ClubPolicy::manageEvents`, `EventPolicy::createFor`).
+- Students (and moderators/admins) join/leave clubs and RSVP to events as `going` / `interested` (one RSVP per user, changeable).
+- **Teachers** can browse clubs and events but cannot join or RSVP (403).
+- Events list: upcoming (not yet finished) by default, past on request, filter by club or school-wide.
 
 ### File storage (local / S3-compatible)
 

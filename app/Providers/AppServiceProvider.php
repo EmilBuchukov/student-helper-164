@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Answer;
+use App\Models\Club;
+use App\Models\Event;
 use App\Models\Exam;
 use App\Models\Grade;
 use App\Models\Material;
@@ -46,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
             'question' => Question::class,
             'answer' => Answer::class,
             'report' => Report::class,
+            'club' => Club::class,
+            'event' => Event::class,
         ]);
 
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));

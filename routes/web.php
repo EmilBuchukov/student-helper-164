@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\StudentImportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Clubs\ClubController;
+use App\Http\Controllers\Clubs\ClubMembershipController;
+use App\Http\Controllers\Clubs\EventController;
 use App\Http\Controllers\Exams\ExamController;
 use App\Http\Controllers\Exams\MaterialController;
 use App\Http\Controllers\ProfileController;
@@ -20,11 +23,8 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Placeholder sections, built in later iterations.
-foreach (['rooms', 'clubs'] as $section) {
-    Route::get("/{$section}", fn () => Inertia::render('ComingSoon', ['section' => "nav.{$section}"]))
-        ->name($section);
-}
+// Room occupancy is intentionally not built yet.
+Route::get('/rooms', fn () => Inertia::render('ComingSoon', ['section' => 'nav.rooms']))->name('rooms');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
@@ -36,6 +36,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:uploads')->name('exams.materials.store');
     Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
     Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+
+    // Clubs & events (teachers: read-only, enforced by ClubPolicy/EventPolicy)
+    Route::resource('clubs', ClubController::class);
+    Route::post('/clubs/{club}/membership', [ClubMembershipController::class, 'store'])->name('clubs.join');
+    Route::delete('/clubs/{club}/membership', [ClubMembershipController::class, 'destroy'])->name('clubs.leave');
+    Route::resource('events', EventController::class);
+    Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp'])->name('events.rsvp');
+    Route::delete('/events/{event}/rsvp', [EventController::class, 'cancelRsvp'])->name('events.rsvp.cancel');
 
     // Q&A and reports: student spaces, closed to teachers.
     Route::middleware('no-teachers')->group(function () {
