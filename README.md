@@ -38,6 +38,7 @@ UI language is Bulgarian (`APP_LOCALE=bg`), timezone `Europe/Sofia`.
 - **Clone into `~/…`, not `/mnt/c/…`.** Projects on the Windows drive are 10–50× slower (file I/O and Vite file watching) and can have permission/line-ending issues.
 - Open the project from WSL with `code .` (VS Code + "WSL" extension).
 - If `docker` is "command not found" inside Ubuntu, Docker Desktop's WSL integration is not enabled for that distro — enable it and restart the terminal.
+- `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` → your WSL user isn't in the `docker` group: `sudo usermod -aG docker $USER`, then `wsl --shutdown` (PowerShell) and reopen Ubuntu; `docker ps` should work without sudo. With Docker Desktop also make sure it is running and WSL integration is on for your distro.
 - Port 5432 already in use? A native PostgreSQL is running in WSL (`sudo service postgresql stop`) or set `FORWARD_DB_PORT=5433` in `.env`.
 - Hot reload not picking up changes → you're probably on `/mnt/c`.
 
