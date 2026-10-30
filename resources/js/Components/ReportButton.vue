@@ -21,7 +21,7 @@ const close = () => {
 };
 
 const submit = () => {
-    form.post(route('reports.store'), { preserveScroll: true, onSuccess: close });
+    form.post(route('reports.store'), { preserveScroll: true, preserveState: true, onSuccess: close });
 };
 </script>
 

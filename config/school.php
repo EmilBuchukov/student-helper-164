@@ -14,4 +14,7 @@ return [
     'materials_max_kb' => 10240,
 
     'materials_extensions' => ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'png', 'jpg', 'jpeg'],
+
+    // Seconds between polls for new channel messages (no WebSockets yet).
+    'channel_poll_seconds' => (int) env('CHANNEL_POLL_SECONDS', 7),
 ];

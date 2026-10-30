@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\StudentImportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Channels\ChannelController;
+use App\Http\Controllers\Channels\MessageController;
+use App\Http\Controllers\Channels\MuteController;
 use App\Http\Controllers\Clubs\ClubController;
 use App\Http\Controllers\Clubs\ClubMembershipController;
 use App\Http\Controllers\Clubs\EventController;
@@ -45,8 +48,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/events/{event}/rsvp', [EventController::class, 'rsvp'])->name('events.rsvp');
     Route::delete('/events/{event}/rsvp', [EventController::class, 'cancelRsvp'])->name('events.rsvp.cancel');
 
-    // Q&A and reports: student spaces, closed to teachers.
+    // Q&A, channels and reports: student spaces, closed to teachers.
     Route::middleware('no-teachers')->group(function () {
+        Route::get('/channels', [ChannelController::class, 'index'])->name('channels.index');
+        Route::get('/channels/{channel}', [ChannelController::class, 'show'])->name('channels.show');
+        Route::get('/channels/{channel}/messages', [MessageController::class, 'index'])->name('channels.messages.index');
+        Route::post('/channels/{channel}/messages', [MessageController::class, 'store'])
+            ->middleware('throttle:messages')->name('channels.messages.store');
+        Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+        Route::post('/channels/{channel}/mutes', [MuteController::class, 'store'])->name('channels.mutes.store');
+        Route::delete('/mutes/{channelMute}', [MuteController::class, 'destroy'])->name('mutes.destroy');
+
         Route::post('/questions', [QuestionController::class, 'store'])->middleware('throttle:questions')->name('questions.store');
         Route::resource('questions', QuestionController::class)->except('store');
         Route::post('/questions/{question}/answers', [AnswerController::class, 'store'])
