@@ -13,6 +13,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const showingMenu = ref(false);
+const visibleAdminNav = computed(() => adminNav.filter((item) => (item.roles ?? ['admin']).includes(user.value?.role)));
 const visibleNav = computed(() => mainNav.filter((item) => !item.hideFor?.includes(user.value?.role)));
 </script>
 
@@ -73,14 +74,14 @@ const visibleNav = computed(() => mainNav.filter((item) => !item.hideFor?.includ
                                     <DropdownLink :href="route('profile.edit')">
                                         {{ $t('nav.profile') }}
                                     </DropdownLink>
-                                    <template v-if="user.is_admin">
+                                    <template v-if="visibleAdminNav.length">
                                         <div
                                             class="border-t border-gray-100 px-4 pt-2 text-xs font-semibold uppercase text-gray-400"
                                         >
                                             {{ $t('nav.admin') }}
                                         </div>
                                         <DropdownLink
-                                            v-for="item in adminNav"
+                                            v-for="item in visibleAdminNav"
                                             :key="item.route"
                                             :href="route(item.route)"
                                         >
@@ -185,9 +186,9 @@ const visibleNav = computed(() => mainNav.filter((item) => !item.hideFor?.includ
                         >
                             {{ $t('nav.profile') }}
                         </ResponsiveNavLink>
-                        <template v-if="user.is_admin">
+                        <template v-if="visibleAdminNav.length">
                             <ResponsiveNavLink
-                                v-for="item in adminNav"
+                                v-for="item in visibleAdminNav"
                                 :key="item.route"
                                 :href="route(item.route)"
                                 :active="route().current(item.active ?? item.route)"

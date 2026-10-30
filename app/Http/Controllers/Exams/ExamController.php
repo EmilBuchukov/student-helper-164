@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Exams;
 use App\Enums\ExamType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Exams\ExamRequest;
+use App\Models\AuditLog;
 use App\Models\Exam;
 use App\Models\Material;
 use App\Support\Audience;
@@ -143,6 +144,7 @@ class ExamController extends Controller
         Gate::authorize('delete', $exam);
 
         $exam->delete();
+        AuditLog::recordModeratorDeletion($exam, 'created_by');
 
         return redirect()->route('exams.index')->with('success', __('ui.exams.deleted'));
     }

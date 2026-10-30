@@ -10,6 +10,11 @@ export const mainNav = [
 ];
 
 export const adminNav = [
-    { label: 'nav.admin_users', route: 'admin.users.index' },
+    { label: 'nav.admin_dashboard', route: 'admin.dashboard' },
+    { label: 'nav.moderation_reports', route: 'moderation.reports.index', roles: ['admin', 'moderator'] },
+    { label: 'nav.admin_users', route: 'admin.users.index', active: 'admin.users.*' },
+    { label: 'nav.admin_whitelist', route: 'admin.whitelist.index' },
     { label: 'nav.admin_import', route: 'admin.students.import' },
+    { label: 'nav.admin_deleted', route: 'admin.deleted.index' },
+    { label: 'nav.admin_audit', route: 'admin.audit.index' },
 ];

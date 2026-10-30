@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\Role;
 use App\Models\Answer;
+use App\Models\AuditLog;
 use App\Models\Channel;
 use App\Models\ChannelMute;
 use App\Models\Message;
@@ -84,13 +85,14 @@ class ChannelSeeder extends Seeder
         if ($channel) {
             $spam = $channel->messages()->create(['user_id' => $offender->id, 'body' => 'КУПЕТЕ ЕВТИНИ ОТГОВОРИ ЗА КОНТРОЛНИТЕ!!! пишете ми на лично']);
 
-            ChannelMute::create([
+            $mute = ChannelMute::create([
                 'channel_id' => $channel->id,
                 'user_id' => $offender->id,
                 'muted_until' => now()->addDay(),
                 'reason' => 'Спам в канала на класа',
                 'created_by' => $moderator->id,
             ]);
+            AuditLog::record($moderator, 'user_muted', $offender, ['until' => $mute->muted_until->toIso8601String(), 'channel' => $channel->name, 'reason' => $mute->reason]);
 
             $reporter = $students->firstWhere('class_id', $offender->class_id) ?? $students->first();
             Report::create(['reporter_id' => $reporter->id, 'reportable_type' => 'message', 'reportable_id' => $spam->id, 'reason' => 'Спам и предлагане на преписване.']);

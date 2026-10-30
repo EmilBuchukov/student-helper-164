@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\AllowedStudent;
 use App\Models\Answer;
 use App\Models\Channel;
+use App\Models\ChannelMute;
 use App\Models\Club;
 use App\Models\Event;
 use App\Models\Exam;
@@ -54,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
             'event' => Event::class,
             'channel' => Channel::class,
             'message' => Message::class,
+            'channel_mute' => ChannelMute::class,
+            'allowed_student' => AllowedStudent::class,
         ]);
 
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
