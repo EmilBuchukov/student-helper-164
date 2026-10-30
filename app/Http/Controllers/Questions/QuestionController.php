@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Questions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Questions\QuestionRequest;
 use App\Models\Answer;
+use App\Models\AuditLog;
 use App\Models\Question;
 use App\Support\Audience;
 use Illuminate\Database\Eloquent\Builder;
@@ -160,6 +161,7 @@ class QuestionController extends Controller
         Gate::authorize('delete', $question);
 
         $question->delete();
+        AuditLog::recordModeratorDeletion($question);
 
         return redirect()->route('questions.index')->with('success', __('ui.questions.deleted'));
     }

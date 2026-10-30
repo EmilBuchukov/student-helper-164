@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DeletedContentController;
 use App\Http\Controllers\Admin\StudentImportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WhitelistController;
 use App\Http\Controllers\Channels\ChannelController;
 use App\Http\Controllers\Channels\MessageController;
 use App\Http\Controllers\Channels\MuteController;
@@ -10,6 +14,7 @@ use App\Http\Controllers\Clubs\ClubMembershipController;
 use App\Http\Controllers\Clubs\EventController;
 use App\Http\Controllers\Exams\ExamController;
 use App\Http\Controllers\Exams\MaterialController;
+use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Questions\AnswerController;
 use App\Http\Controllers\Questions\QuestionController;
@@ -73,9 +78,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+    Route::post('/users/{user}/suspend', [UserController::class, 'suspend'])->name('users.suspend');
+    Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');
+    Route::get('/whitelist', [WhitelistController::class, 'index'])->name('whitelist.index');
+    Route::post('/whitelist', [WhitelistController::class, 'store'])->name('whitelist.store');
+    Route::delete('/whitelist/{allowedStudent}', [WhitelistController::class, 'destroy'])->name('whitelist.destroy');
+    Route::get('/deleted', [DeletedContentController::class, 'index'])->name('deleted.index');
+    Route::post('/deleted/{type}/{id}/restore', [DeletedContentController::class, 'restore'])
+        ->whereNumber('id')->name('deleted.restore');
+    Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
     Route::get('/students/import', [StudentImportController::class, 'create'])->name('students.import');
     Route::post('/students/import', [StudentImportController::class, 'store'])->name('students.import.store');
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,moderator'])->prefix('moderation')->name('moderation.')->group(function () {
+    Route::get('/reports', [ModerationReportController::class, 'index'])->name('reports.index');
+    Route::post('/reports/{report}/dismiss', [ModerationReportController::class, 'dismiss'])->name('reports.dismiss');
+    Route::post('/reports/{report}/resolve', [ModerationReportController::class, 'resolve'])->name('reports.resolve');
 });
 
 require __DIR__.'/auth.php';

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Questions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Questions\AnswerRequest;
 use App\Models\Answer;
+use App\Models\AuditLog;
 use App\Models\Question;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +34,7 @@ class AnswerController extends Controller
         Gate::authorize('delete', $answer);
 
         $answer->delete();
+        AuditLog::recordModeratorDeletion($answer);
 
         return back()->with('success', __('ui.answers.deleted'));
     }

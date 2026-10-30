@@ -1,7 +1,7 @@
 # 164 ГПИЕ — ученическа платформа
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
-Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events, student channels (see [Features](#features)).
+Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events, student-only channels, admin panel & moderation (see [Features](#features)).
 Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
@@ -157,7 +157,7 @@ New accounts must verify their email before reaching the dashboard (link in Mail
 
 ### Audience scoping (shared)
 
-Exams (and later questions and channels) target an audience via two columns: `scope_type` (`grade` | `class` | `profile`) and `scope_id`.
+Exams, questions and channels target an audience via two columns: `scope_type` (`grade` | `class` | `profile`) and `scope_id`.
 `App\Models\Concerns\HasAudienceScope` provides:
 
 - `Model::query()->visibleTo($user)` — only items for the user's class, grade or profile;
@@ -219,6 +219,46 @@ Exams (and later questions and channels) target an audience via two columns: `sc
   from `MessageController` on a private channel `channels.{id}` authorized with `ChannelPolicy::view`, listen with Laravel Echo in
   `Pages/Channels/Show.vue` (reusing `append()`), and keep polling as a fallback.
 
+### Admin panel & moderation (`/admin`, `/moderation`)
+
+- **Dashboard** (`/admin`): counts (users, students, suspended, exams, questions, open reports, active mutes, pending whitelist), quick links, latest audit entries.
+- **Reports queue** (`/moderation/reports`, moderators + admins): open reports first, with content preview, author, reporter, reason and a link.
+  *Dismiss*, or *Resolve* with optional content removal (soft delete), global author mute (15 min – 1 week) and — admins only — author suspension.
+  `handled_by`/`handled_at`/`resolution_note` are recorded; removing content also resolves every other open report about it.
+- **Users** (`/admin/users`): search by name/email, filter by role/status, detail page with content counts, reports against their content and mute history;
+  role change (admins, never their own) and **suspend/reactivate** (`is_active`). Suspended users cannot log in (`LoginRequest`), are logged out
+  on their next request (`EnsureUserIsActive`), and their database sessions + remember token are invalidated (`UserSuspension`).
+- **Whitelist** (`/admin/whitelist`): `allowed_students` with claimed/pending status, add/remove single entries (claimed ones cannot be removed), link to the CSV import.
+- **Изтрито съдържание** (`/admin/deleted`): soft-deleted questions, answers and messages; admins restore them.
+- **Audit log** (`/admin/audit`, `audit_logs`): who, action, target (+ label snapshot), details, IP, time. Logged actions: moderator deletions
+  (Q&A, messages, exams, materials — not deleting your own content), content restore, report dismiss/resolve, mute/unmute, suspend/reactivate,
+  role change, whitelist add/remove.
+
+### Permission matrix
+
+| Feature | Student | Moderator | Teacher | Admin |
+| --- | --- | --- | --- | --- |
+| Exams: view | own class/grade/profile | all | all | all |
+| Exams: create | own scopes | own scopes | any scope | any scope |
+| Exams: edit/delete | own | any | own | any |
+| Materials: upload / download | ✓ / visible exams | ✓ / all | ✗ / all | ✓ / all |
+| Materials: delete | own | any | ✗ | any |
+| Q&A: view, ask, answer, vote, report | own scopes + school-wide | all scopes | **403 everywhere** | all scopes |
+| Q&A: edit | own | own | ✗ | own |
+| Q&A: delete | own | any | ✗ | any |
+| Clubs & events: view | ✓ | ✓ | ✓ (read-only) | ✓ |
+| Clubs: join/leave, events: RSVP | ✓ | ✓ | ✗ | ✓ |
+| Clubs: create/edit/delete | ✗ | ✗ | ✗ | ✓ |
+| Events: manage | own club if leader | own club if leader | ✗ | all + school-wide |
+| Channels: read/post/report | own class/grade/profile | all | **403 everywhere** | all (+ archived) |
+| Channels: delete messages | own | any | ✗ | any |
+| Channels: mute users | ✗ | ✓ (not admins/moderators) | ✗ | ✓ (not admins) |
+| Reports queue | ✗ | ✓ | ✗ | ✓ (+ suspend author) |
+| Admin panel (dashboard, users, roles, suspend, whitelist, import, restore, audit) | ✗ | ✗ | ✗ | ✓ |
+
+Enforced by policies (`app/Policies`) plus route middleware (`role:admin`, `role:admin,moderator`, `no-teachers`);
+tests iterate the sensitive routes as unauthorized roles.
+
 ### File storage (local / S3-compatible)
 
 All uploads go through Laravel's `Storage` facade on the disk from `FILESYSTEM_DISK` (or `MATERIALS_DISK` to override it for materials).
@@ -264,24 +304,33 @@ CI runs Pint, the test suite (PostgreSQL service) and `npm run build` on every p
 ```
 app/
   Enums/Role.php                         student | moderator | admin | teacher (+ Bulgarian labels)
-  Http/Controllers/Admin/                UserController (read-only list), StudentImportController
+  Http/Controllers/Admin/                Dashboard, User (search/role/suspend), Whitelist, StudentImport, DeletedContent, AuditLog
+  Http/Controllers/Moderation/           ReportController (queue, dismiss, resolve)
+  Http/Controllers/{Exams,Questions,Clubs,Channels}/  feature controllers
+  Http/Middleware/DenyTeachers.php       `no-teachers`: 403 for teachers on Q&A, channels and reports
   Http/Controllers/Auth/                 Breeze auth; RegisteredUserController enforces the whitelist
   Http/Middleware/EnsureUserHasRole.php  `role:admin`, `role:admin,moderator`
   Http/Middleware/EnsureUserIsActive.php logs out deactivated users
   Http/Requests/                         Form Requests (RegisterRequest, LoginRequest, ImportStudentsRequest…)
-  Models/                                User, Grade, Profile, SchoolClass (table `classes`), AllowedStudent
-  Policies/ChannelPolicy.php             placeholder — teachers are always denied
-  Services/StudentImportService.php      CSV parsing/validation/import report
-config/school.php                        seed admin settings
+  Models/                                User, Grade, Profile, SchoolClass (table `classes`), AllowedStudent, Exam, Material,
+                                         Question, Answer, Vote, Report, Club, Event, Channel, Message, ChannelMute, AuditLog
+  Models/Concerns/                       HasAudienceScope (`visibleTo()`), Votable, Reportable
+  Observers/SchoolStructureObserver.php  auto-creates/archives channels
+  Policies/                              Exam, Material, Question, Answer, Club, Event, Channel, Message
+  Services/                              StudentImportService, MaterialStorage, ChannelService, UserSuspension
+  Support/Audience.php                   audience helpers (scopes of a user, options, decode)
+config/school.php                        seed admin, material upload limits/disk, channel poll interval
 database/migrations|factories|seeders/
 docs/sample-students.csv
 lang/bg/                                 auth, validation, passwords, pagination, ui (frontend strings)
 resources/js/
   Layouts/AppLayout.vue                  responsive navbar + mobile menu + footer
-  Pages/                                 Welcome, Dashboard, ComingSoon, Auth/*, Profile/*, Admin/*
+  Pages/                                 Welcome, Dashboard, ComingSoon, Auth/*, Profile/*, Exams/*, Questions/*, Clubs/*,
+                                         Events/*, Channels/Show, Admin/*, Moderation/Reports/Index
+  http.js                                fetch wrapper (XSRF) for channel polling
   i18n.js                                `$t('key')` helper fed from lang/bg/ui.php via Inertia
 routes/web.php, routes/auth.php
-tests/Feature/                           auth, registration, profile, dashboard, admin access, CSV import
+tests/Feature/                           auth, registration, admin, exams, Q&A, clubs, channels, moderation, translation keys
 ```
 
 Frontend strings live in `lang/bg/ui.php`; they are shared to Vue as flattened keys (`nav.home`) and used with `$t('nav.home')`.
@@ -297,48 +346,108 @@ Frontend strings live in `lang/bg/ui.php`; they are shared to Vue as flattened k
 | `classes` | `id`, `grade_id` → grades, `letter`, `profile_id` → profiles (nullable) | unique (`grade_id`, `letter`); grade delete restricted, profile delete nulls |
 | `users` | Breeze columns + `role` (enum), `class_id` → classes (nullable), `is_active` | class delete nulls `class_id` |
 | `allowed_students` | `id`, `email` (unique), `class_id` → classes, `claimed_at`, `claimed_by` → users | class delete restricted; user delete nulls `claimed_by` |
+| `exams` | `subject`, `title`, `description`, `exam_date`, `type`, `scope_type`+`scope_id`, `created_by` → users | indexed on scope, date, subject |
+| `materials` | `exam_id` → exams, `user_id` → users, `title`, `path` (random, private), `original_name`, `mime_type`, `size` | |
+| `questions` | `user_id`, `title`, `body`, `subject`, `scope_type`+`scope_id` (null = school-wide), `accepted_answer_id` → answers | soft deletes |
+| `answers` | `question_id` → questions, `user_id`, `body` | soft deletes |
+| `votes` | `user_id`, `votable_type`+`votable_id` | unique per user/item |
+| `reports` | `reporter_id`, `reportable_type`+`reportable_id`, `reason`, `status` (open/resolved/dismissed), `handled_by`, `handled_at`, `resolution_note` | partial unique index: one open report per user/item |
+| `clubs` | `name`, `slug` (unique), `description`, `leader_id` → users, `is_active` | |
+| `events` | `club_id` → clubs (null = school-wide), `title`, `description`, `starts_at`, `ends_at`, `location`, `created_by` | |
+| `club_members` | `club_id`, `user_id`, `joined_at` | unique pair |
+| `event_attendees` | `event_id`, `user_id`, `status` (going/interested) | unique pair |
+| `channels` | `name`, `scope_type`+`scope_id` (unique), `is_archived` | one per grade/class/profile |
+| `messages` | `channel_id`, `user_id`, `body` (≤ 2000) | soft deletes; index (`channel_id`, `id`) |
+| `channel_mutes` | `channel_id` (null = global), `user_id`, `muted_until`, `reason`, `created_by` | |
+| `audit_logs` | `user_id` (actor), `action`, `target_type`+`target_id`, `details` (json), `ip_address`, `created_at` | |
+
+Polymorphic columns use the aliases from `Relation::enforceMorphMap()` in `AppServiceProvider` (`question`, `answer`, `message`, `user`, …).
 
 ```mermaid
 erDiagram
     GRADES ||--o{ CLASSES : has
     PROFILES |o--o{ CLASSES : specializes
-    CLASSES |o--o{ USERS : "contains"
+    CLASSES |o--o{ USERS : contains
     CLASSES ||--o{ ALLOWED_STUDENTS : "whitelists for"
     USERS |o--o| ALLOWED_STUDENTS : claims
 
-    GRADES {
-        bigint id PK
-        smallint number "8-12, unique"
-    }
-    PROFILES {
-        bigint id PK
-        string name
-    }
-    CLASSES {
-        bigint id PK
-        bigint grade_id FK
-        string letter
-        bigint profile_id FK "nullable"
-    }
+    USERS ||--o{ EXAMS : creates
+    EXAMS ||--o{ MATERIALS : has
+    USERS ||--o{ MATERIALS : uploads
+
+    USERS ||--o{ QUESTIONS : asks
+    QUESTIONS ||--o{ ANSWERS : has
+    QUESTIONS |o--o| ANSWERS : accepts
+    USERS ||--o{ ANSWERS : writes
+    USERS ||--o{ VOTES : casts
+    USERS ||--o{ REPORTS : files
+
+    CLUBS ||--o{ EVENTS : organizes
+    USERS |o--o{ CLUBS : leads
+    CLUBS ||--o{ CLUB_MEMBERS : has
+    USERS ||--o{ CLUB_MEMBERS : joins
+    EVENTS ||--o{ EVENT_ATTENDEES : has
+    USERS ||--o{ EVENT_ATTENDEES : rsvps
+
+    CHANNELS ||--o{ MESSAGES : contains
+    USERS ||--o{ MESSAGES : posts
+    CHANNELS |o--o{ CHANNEL_MUTES : "scopes (null = global)"
+    USERS ||--o{ CHANNEL_MUTES : "is muted"
+    USERS ||--o{ AUDIT_LOGS : performs
+
     USERS {
         bigint id PK
         string name
         string email "unique"
-        string password
         enum role "student|moderator|admin|teacher"
         bigint class_id FK "nullable"
         boolean is_active
-        timestamp email_verified_at
     }
-    ALLOWED_STUDENTS {
+    EXAMS {
         bigint id PK
-        string email "unique"
-        bigint class_id FK
-        timestamp claimed_at "nullable"
-        bigint claimed_by FK "nullable"
+        string subject
+        date exam_date
+        enum scope_type "grade|class|profile"
+        bigint scope_id
+        bigint created_by FK
+    }
+    QUESTIONS {
+        bigint id PK
+        bigint user_id FK
+        string title
+        enum scope_type "nullable = school-wide"
+        bigint scope_id
+        bigint accepted_answer_id FK
+        timestamp deleted_at
+    }
+    VOTES {
+        bigint user_id FK
+        string votable_type "question|answer"
+        bigint votable_id
+    }
+    REPORTS {
+        bigint reporter_id FK
+        string reportable_type "question|answer|message"
+        bigint reportable_id
+        enum status "open|resolved|dismissed"
+        bigint handled_by FK
+    }
+    CHANNELS {
+        bigint id PK
+        enum scope_type "grade|class|profile"
+        bigint scope_id
+        boolean is_archived
+    }
+    AUDIT_LOGS {
+        bigint user_id FK
+        string action
+        string target_type
+        bigint target_id
+        json details
     }
 ```
 
-## Out of scope (next phases)
+## Out of scope
 
-Exams & materials, Q&A, room occupancy/bookings, clubs & events, student-only channels/chat, real-time features.
+- Room occupancy / bookings ("Стаи" shows "Очаквайте скоро").
+- Real-time WebSockets: channels poll every few seconds; see the Reverb notes in [Channels](#channels-channels--students-only).

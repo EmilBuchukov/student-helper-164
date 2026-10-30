@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Channels;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Channels\StoreMessageRequest;
+use App\Models\AuditLog;
 use App\Models\Channel;
 use App\Models\ChannelMute;
 use App\Models\Message;
@@ -72,6 +73,7 @@ class MessageController extends Controller
         Gate::authorize('delete', $message);
 
         $message->delete();
+        AuditLog::recordModeratorDeletion($message);
 
         return $request->expectsJson()
             ? response()->json(['deleted' => $message->id])

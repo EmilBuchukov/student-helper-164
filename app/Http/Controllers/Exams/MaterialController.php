@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Exams;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Exams\StoreMaterialRequest;
+use App\Models\AuditLog;
 use App\Models\Exam;
 use App\Models\Material;
 use App\Services\MaterialStorage;
@@ -39,6 +40,7 @@ class MaterialController extends Controller
         Gate::authorize('delete', $material);
 
         $material->delete();
+        AuditLog::recordModeratorDeletion($material);
 
         return back()->with('success', __('ui.materials.deleted'));
     }
