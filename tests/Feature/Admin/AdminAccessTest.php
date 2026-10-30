@@ -57,3 +57,15 @@ test('channel policy denies teachers', function () {
     expect($policy->viewAny(User::factory()->teacher()->make()))->toBeFalse()
         ->and($policy->viewAny(User::factory()->make()))->toBeTrue();
 });
+
+test('error pages are shown in Bulgarian', function () {
+    $this->actingAs(User::factory()->create())
+        ->get('/admin/users')
+        ->assertForbidden()
+        ->assertSee('Нямаш достъп до тази страница')
+        ->assertDontSee('Forbidden');
+
+    $this->get('/no-such-page')
+        ->assertNotFound()
+        ->assertSee('Страницата не е намерена');
+});
