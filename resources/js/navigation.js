@@ -2,7 +2,7 @@
 export const mainNav = [
     { label: 'nav.home', route: 'home' },
     { label: 'nav.exams', route: 'exams.index', active: 'exams.*' },
-    { label: 'nav.questions', route: 'questions' },
+    { label: 'nav.questions', route: 'questions.index', active: 'questions.*', hideFor: ['teacher'] },
     { label: 'nav.rooms', route: 'rooms' },
     { label: 'nav.clubs', route: 'clubs' },
 ];

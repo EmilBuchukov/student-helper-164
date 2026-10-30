@@ -13,6 +13,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const showingMenu = ref(false);
+const visibleNav = computed(() => mainNav.filter((item) => !item.hideFor?.includes(user.value?.role)));
 </script>
 
 <template>
@@ -29,7 +30,7 @@ const showingMenu = ref(false);
 
                         <div class="hidden space-x-6 md:-my-px md:ms-10 md:flex">
                             <NavLink
-                                v-for="item in mainNav"
+                                v-for="item in visibleNav"
                                 :key="item.route"
                                 :href="route(item.route)"
                                 :active="route().current(item.active ?? item.route)"
@@ -152,7 +153,7 @@ const showingMenu = ref(false);
             <div v-show="showingMenu" class="md:hidden">
                 <div class="space-y-1 pb-3 pt-2">
                     <ResponsiveNavLink
-                        v-for="item in mainNav"
+                        v-for="item in visibleNav"
                         :key="item.route"
                         :href="route(item.route)"
                         :active="route().current(item.active ?? item.route)"
