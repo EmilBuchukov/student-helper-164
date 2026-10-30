@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -32,8 +33,48 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => fn () => $this->sharedUser($request),
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+            ],
+            'locale' => fn () => app()->getLocale(),
+            'translations' => fn () => $this->translations(),
         ];
+    }
+
+    /**
+     * The subset of the authenticated user exposed to the frontend.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function sharedUser(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role?->value,
+            'class_name' => $user->schoolClass?->name,
+            'is_admin' => $user->isAdmin(),
+        ];
+    }
+
+    /**
+     * Flattened UI translations (lang/{locale}/ui.php) for the frontend.
+     *
+     * @return array<string, string>
+     */
+    protected function translations(): array
+    {
+        $translations = trans('ui');
+
+        return is_array($translations) ? Arr::dot($translations) : [];
     }
 }
