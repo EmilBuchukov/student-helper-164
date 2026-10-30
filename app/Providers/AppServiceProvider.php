@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Models\Answer;
+use App\Models\Channel;
 use App\Models\Club;
 use App\Models\Event;
 use App\Models\Exam;
 use App\Models\Grade;
 use App\Models\Material;
+use App\Models\Message;
 use App\Models\Profile;
 use App\Models\Question;
 use App\Models\Report;
@@ -50,6 +52,8 @@ class AppServiceProvider extends ServiceProvider
             'report' => Report::class,
             'club' => Club::class,
             'event' => Event::class,
+            'channel' => Channel::class,
+            'message' => Message::class,
         ]);
 
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
@@ -57,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('questions', fn (Request $request) => Limit::perMinute(5)->by($perUser($request)));
         RateLimiter::for('answers', fn (Request $request) => Limit::perMinute(10)->by($perUser($request)));
         RateLimiter::for('votes', fn (Request $request) => Limit::perMinute(60)->by($perUser($request)));
+        RateLimiter::for('messages', fn (Request $request) => Limit::perMinute(20)->by($perUser($request)));
         RateLimiter::for('reports', fn (Request $request) => Limit::perMinute(10)->by($perUser($request)));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
     }

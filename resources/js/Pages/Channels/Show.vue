@@ -1,0 +1,305 @@
+<script setup>
+import AppLayout from '@/Layouts/AppLayout.vue';
+import Checkbox from '@/Components/Checkbox.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import InputError from '@/Components/InputError.vue';
+import Modal from '@/Components/Modal.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import ReportButton from '@/Components/ReportButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import SelectInput from '@/Components/SelectInput.vue';
+import { formatDateTime } from '@/format';
+import { api } from '@/http';
+import { t } from '@/i18n';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+
+const props = defineProps({
+    channels: { type: Array, required: true },
+    channel: { type: Object, default: null },
+    messages: { type: Array, default: () => [] },
+    hasMore: { type: Boolean, default: false },
+    mute: { type: Object, default: null },
+    serverTime: { type: String, default: null },
+    mutes: { type: Array, default: () => [] },
+    muteDurations: { type: Array, default: () => [] },
+    pollSeconds: { type: Number, default: 7 },
+    maxLength: { type: Number, default: 2000 },
+});
+
+const groups = computed(() =>
+    ['class', 'grade', 'profile']
+        .map((type) => ({ type, items: props.channels.filter((c) => c.type === type) }))
+        .filter((group) => group.items.length),
+);
+
+const list = ref([...props.messages]);
+const more = ref(props.hasMore);
+const currentMute = ref(props.mute);
+const canPost = ref(props.channel?.can.post ?? false);
+const since = ref(props.serverTime);
+const body = ref('');
+const sending = ref(false);
+const loadingMore = ref(false);
+const error = ref('');
+const offline = ref(false);
+const scroller = ref(null);
+let timer = null;
+let polling = false;
+
+const lastId = () => (list.value.length ? list.value[list.value.length - 1].id : 0);
+const charsLeft = computed(() => props.maxLength - body.value.length);
+
+const nearBottom = () => {
+    const el = scroller.value;
+    return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+};
+
+const scrollToBottom = async () => {
+    await nextTick();
+    if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight;
+};
+
+const append = (messages) => {
+    const known = new Set(list.value.map((m) => m.id));
+    const fresh = messages.filter((m) => !known.has(m.id));
+    if (fresh.length) list.value = [...list.value, ...fresh];
+    return fresh.length;
+};
+
+const poll = async () => {
+    if (!props.channel || polling || document.hidden) return;
+    polling = true;
+    try {
+        const url = route('channels.messages.index', { channel: props.channel.id, after: lastId(), since: since.value });
+        const data = await api('GET', url);
+        const stick = nearBottom();
+        if (data.deleted_ids.length) {
+            const removed = new Set(data.deleted_ids);
+            list.value = list.value.filter((m) => !removed.has(m.id));
+        }
+        if (append(data.messages) && stick) scrollToBottom();
+        currentMute.value = data.mute;
+        canPost.value = data.can_post;
+        since.value = data.server_time;
+        offline.value = false;
+    } catch {
+        offline.value = true;
+    } finally {
+        polling = false;
+    }
+};
+
+const loadMore = async () => {
+    if (!list.value.length || loadingMore.value) return;
+    loadingMore.value = true;
+    const el = scroller.value;
+    const previousHeight = el?.scrollHeight ?? 0;
+    try {
+        const data = await api('GET', route('channels.messages.index', { channel: props.channel.id, before: list.value[0].id }));
+        list.value = [...data.messages, ...list.value];
+        more.value = data.hasMore;
+        await nextTick();
+        if (el) el.scrollTop = el.scrollHeight - previousHeight;
+    } catch {
+        error.value = t('common.error');
+    } finally {
+        loadingMore.value = false;
+    }
+};
+
+const send = async () => {
+    const text = body.value.trim();
+    if (!text || sending.value || !canPost.value) return;
+    sending.value = true;
+    error.value = '';
+    try {
+        const data = await api('POST', route('channels.messages.store', props.channel.id), { body: text });
+        append([data.message]);
+        body.value = '';
+        scrollToBottom();
+    } catch (e) {
+        if (e.status === 429) error.value = t('channels.rate_limited');
+        else if (e.status === 422) error.value = e.data.errors?.body?.[0] ?? t('channels.send_failed');
+        else {
+            error.value = t('channels.send_failed');
+            if (e.status === 403) poll();
+        }
+    } finally {
+        sending.value = false;
+    }
+};
+
+const onKeydown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        send();
+    }
+};
+
+const destroy = async (message) => {
+    if (!confirm(t('common.confirm_delete'))) return;
+    try {
+        await api('DELETE', route('messages.destroy', message.id));
+        list.value = list.value.filter((m) => m.id !== message.id);
+    } catch {
+        error.value = t('common.error');
+    }
+};
+
+// Moderation: mute dialog
+const muteTarget = ref(null);
+const muteForm = useForm({ user_id: null, minutes: props.muteDurations[0] ?? 15, reason: '', global: false });
+
+const openMute = (message) => {
+    muteTarget.value = message;
+    muteForm.reset();
+    muteForm.clearErrors();
+    muteForm.user_id = message.author_id;
+};
+
+const submitMute = () => {
+    muteForm.post(route('channels.mutes.store', props.channel.id), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => (muteTarget.value = null),
+    });
+};
+
+const unmute = (mute) => router.delete(route('mutes.destroy', mute.id), { preserveScroll: true, preserveState: true });
+
+onMounted(() => {
+    if (!props.channel) return;
+    scrollToBottom();
+    timer = setInterval(poll, Math.max(3, props.pollSeconds) * 1000);
+    document.addEventListener('visibilitychange', poll);
+});
+
+onBeforeUnmount(() => {
+    clearInterval(timer);
+    document.removeEventListener('visibilitychange', poll);
+});
+</script>
+
+<template>
+    <Head :title="channel ? channel.name : $t('channels.title')" />
+
+    <AppLayout>
+        <div class="mx-auto max-w-7xl px-0 sm:px-6 sm:py-6 lg:px-8">
+            <div class="flex overflow-hidden bg-white shadow-sm sm:rounded-lg" style="height: calc(100vh - 7rem)">
+                <aside class="w-full shrink-0 overflow-y-auto border-gray-200 md:block md:w-64 md:border-e" :class="channel ? 'hidden' : 'block'">
+                    <h2 class="px-4 pb-2 pt-4 text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $t('channels.list') }}</h2>
+                    <p v-if="channels.length === 0" class="px-4 text-sm text-gray-500">{{ $t('channels.empty_list') }}</p>
+                    <nav v-for="group in groups" :key="group.type" class="pb-3">
+                        <p class="px-4 py-1 text-xs font-medium text-gray-400">{{ $t(`channels.types.${group.type}`) }}</p>
+                        <Link
+                            v-for="item in group.items"
+                            :key="item.id"
+                            :href="route('channels.show', item.id)"
+                            class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50"
+                            :class="channel?.id === item.id ? 'bg-red-50 font-semibold text-red-800' : 'text-gray-700'"
+                        >
+                            <span class="truncate"># {{ item.name }}</span>
+                            <span v-if="item.is_archived" class="ms-2 text-xs text-gray-400">{{ $t('channels.archived') }}</span>
+                        </Link>
+                    </nav>
+                </aside>
+
+                <section v-if="!channel" class="hidden flex-1 items-center justify-center md:flex">
+                    <EmptyState :title="$t('channels.title')" :hint="$t('channels.choose')" />
+                </section>
+
+                <section v-else class="flex min-w-0 flex-1 flex-col">
+                    <header class="flex items-center gap-3 border-b px-4 py-3">
+                        <Link :href="route('channels.index')" class="text-sm text-gray-500 md:hidden">← {{ $t('channels.back_to_list') }}</Link>
+                        <h1 class="truncate font-semibold text-gray-900"># {{ channel.name }}</h1>
+                        <span v-if="offline" class="ms-auto text-xs text-amber-700">{{ $t('channels.connection_lost') }}</span>
+                    </header>
+
+                    <div v-if="channel.can.moderate && mutes.length" class="border-b bg-gray-50 px-4 py-2 text-xs text-gray-600">
+                        <span class="font-semibold">{{ $t('channels.active_mutes') }}:</span>
+                        <span v-for="m in mutes" :key="m.id" class="ms-2 inline-flex items-center gap-1">
+                            {{ m.user }} ({{ $t('channels.until', { time: formatDateTime(m.until) }) }}<template v-if="m.global">, {{ $t('channels.mute_global') }}</template>)
+                            <button type="button" class="text-red-700 hover:underline" @click="unmute(m)">{{ $t('channels.unmute') }}</button>
+                        </span>
+                    </div>
+
+                    <div ref="scroller" class="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+                        <div v-if="more" class="text-center">
+                            <button type="button" :disabled="loadingMore" class="text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50" @click="loadMore">
+                                {{ loadingMore ? $t('common.loading') : $t('channels.load_more') }}
+                            </button>
+                        </div>
+                        <p v-if="list.length === 0" class="py-10 text-center text-sm text-gray-500">{{ $t('channels.no_messages') }}</p>
+
+                        <div v-for="message in list" :key="message.id" class="group flex" :class="message.own ? 'justify-end' : 'justify-start'">
+                            <div class="max-w-[85%] rounded-lg px-3 py-2 sm:max-w-[70%]" :class="message.own ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-900'">
+                                <p v-if="!message.own" class="text-xs font-semibold text-gray-600">{{ message.author ?? $t('common.deleted_user') }}</p>
+                                <p class="whitespace-pre-line break-words text-sm">{{ message.body }}</p>
+                                <div class="mt-1 flex flex-wrap items-center gap-x-3 text-[11px]" :class="message.own ? 'text-red-100' : 'text-gray-500'">
+                                    <span>{{ formatDateTime(message.created_at) }}</span>
+                                    <button v-if="message.can.delete" type="button" class="hover:underline" @click="destroy(message)">{{ $t('common.delete') }}</button>
+                                    <button v-if="message.can.mute" type="button" class="hover:underline" @click="openMute(message)">{{ $t('channels.mute') }}</button>
+                                    <ReportButton v-if="message.can.report" type="message" :id="message.id" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="border-t p-3">
+                        <p v-if="channel.is_archived" class="text-sm text-gray-500">{{ $t('channels.archived_notice') }}</p>
+                        <div v-else-if="currentMute" class="rounded-md bg-amber-50 p-3 text-sm text-amber-800" role="status">
+                            {{ $t('channels.muted_notice', { until: formatDateTime(currentMute.until) }) }}
+                            <span v-if="currentMute.reason"> ({{ currentMute.reason }})</span>
+                            <span v-if="currentMute.global" class="block text-xs">{{ $t('channels.muted_global') }}</span>
+                        </div>
+                        <form v-else-if="canPost" class="flex items-end gap-2" @submit.prevent="send">
+                            <div class="flex-1">
+                                <label for="message-body" class="sr-only">{{ $t('channels.message') }}</label>
+                                <textarea
+                                    id="message-body"
+                                    v-model="body"
+                                    rows="2"
+                                    :maxlength="maxLength"
+                                    class="block w-full resize-none rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500"
+                                    :placeholder="$t('channels.placeholder')"
+                                    @keydown="onKeydown"
+                                />
+                                <div class="mt-1 flex justify-between text-xs">
+                                    <InputError :message="error" />
+                                    <span v-if="charsLeft < 200" class="ms-auto text-gray-500">{{ $t('channels.chars_left', { count: charsLeft }) }}</span>
+                                </div>
+                            </div>
+                            <PrimaryButton :disabled="sending || !body.trim()" class="mb-5">{{ sending ? $t('channels.sending') : $t('channels.send') }}</PrimaryButton>
+                        </form>
+                    </footer>
+                </section>
+            </div>
+        </div>
+
+        <Modal :show="muteTarget !== null" max-width="md" @close="muteTarget = null">
+            <form v-if="muteTarget" class="space-y-4 p-6" @submit.prevent="submitMute">
+                <h3 class="text-lg font-semibold text-gray-900">{{ $t('channels.mute_title', { name: muteTarget.author }) }}</h3>
+                <label class="block text-sm text-gray-700">
+                    {{ $t('channels.mute_duration') }}
+                    <SelectInput v-model="muteForm.minutes" class="mt-1 block w-full">
+                        <option v-for="d in muteDurations" :key="d" :value="d">{{ $t(`channels.durations.${d}`) }}</option>
+                    </SelectInput>
+                </label>
+                <label class="block text-sm text-gray-700">
+                    {{ $t('channels.mute_reason') }}
+                    <input v-model="muteForm.reason" type="text" maxlength="500" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500" />
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <Checkbox v-model:checked="muteForm.global" />
+                    {{ $t('channels.mute_global') }}
+                </label>
+                <InputError :message="muteForm.errors.user_id || muteForm.errors.minutes || muteForm.errors.reason" />
+                <div class="flex justify-end gap-2">
+                    <SecondaryButton type="button" @click="muteTarget = null">{{ $t('common.cancel') }}</SecondaryButton>
+                    <PrimaryButton :disabled="muteForm.processing">{{ $t('channels.mute') }}</PrimaryButton>
+                </div>
+            </form>
+        </Modal>
+    </AppLayout>
+</template>

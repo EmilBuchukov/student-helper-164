@@ -20,7 +20,7 @@ class Report extends Model
     /**
      * Morph aliases of content that can be reported.
      */
-    public const REPORTABLE_TYPES = ['question', 'answer'];
+    public const REPORTABLE_TYPES = ['question', 'answer', 'message'];
 
     /**
      * @return BelongsTo<User, $this>

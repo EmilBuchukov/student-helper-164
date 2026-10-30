@@ -1,7 +1,7 @@
 # 164 ГПИЕ — ученическа платформа
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
-Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events (see [Features](#features)).
+Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events, student channels (see [Features](#features)).
 Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
@@ -201,6 +201,23 @@ Exams (and later questions and channels) target an audience via two columns: `sc
 - Students (and moderators/admins) join/leave clubs and RSVP to events as `going` / `interested` (one RSVP per user, changeable).
 - **Teachers** can browse clubs and events but cannot join or RSVP (403).
 - Events list: upcoming (not yet finished) by default, past on request, filter by club or school-wide.
+
+### Channels (`/channels`) — students only
+
+- One channel per grade, class and profile, created by `ChannelService` (`syncAll()` in `ChannelSeeder`) and kept in sync by
+  `SchoolStructureObserver` (new/renamed class, grade or profile → channel created/renamed; deleted → channel archived).
+  Run `php artisan db:seed --class=ChannelSeeder` to (re)create channels for existing data.
+- **Teachers have no access at all**: `no-teachers` middleware (403 on every channel/message/mute route), `ChannelPolicy`
+  and `Channel::audienceHiddenFrom()` (so `Channel::visibleTo($teacher)` is always empty). The nav link is hidden for them.
+- Students see only the channels of their class, grade and profile; moderators and admins see all channels (moderation).
+- Messages: max 2000 characters, 20/min per user, "load more" pagination (`?before=<id>`), soft deletes.
+  Authors delete their own messages; moderators/admins delete any and **mute** users in a channel or globally
+  (`channel_mutes`, 15 min – 1 week). Muted users see a notice and get 403 when posting. Anyone can report a message (shared `reports`).
+- **Real-time:** the page polls `GET /channels/{id}/messages?after=<last id>&since=<server_time>` every
+  `CHANNEL_POLL_SECONDS` (default 7) while the tab is visible; the response also carries deleted message ids and the
+  current mute. No WebSockets yet. To add **Laravel Reverb** later: broadcast a `MessagePosted`/`MessageDeleted` event
+  from `MessageController` on a private channel `channels.{id}` authorized with `ChannelPolicy::view`, listen with Laravel Echo in
+  `Pages/Channels/Show.vue` (reusing `append()`), and keep polling as a fallback.
 
 ### File storage (local / S3-compatible)
 
