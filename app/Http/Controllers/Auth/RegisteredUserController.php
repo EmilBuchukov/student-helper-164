@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Models\AllowedStudent;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,23 +27,43 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
+     * Register a student whose email is on the school's (unclaimed) whitelist.
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $data = $request->validated();
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = DB::transaction(function () use ($data) {
+            $allowed = AllowedStudent::query()
+                ->where('email', $data['email'])
+                ->unclaimed()
+                ->lockForUpdate()
+                ->first();
+
+            if (! $allowed || User::where('email', $data['email'])->exists()) {
+                throw ValidationException::withMessages([
+                    'email' => __('auth.not_whitelisted'),
+                ]);
+            }
+
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'role' => Role::Student,
+                'class_id' => $allowed->class_id,
+                'is_active' => true,
+            ]);
+
+            $allowed->update([
+                'claimed_at' => now(),
+                'claimed_by' => $user->id,
+            ]);
+
+            return $user;
+        });
 
         event(new Registered($user));
 
