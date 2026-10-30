@@ -1,6 +1,5 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import FlashMessage from '@/Components/FlashMessage.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -50,8 +49,6 @@ const sections = [
 
         <div class="py-6 sm:py-10">
             <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <FlashMessage />
-
                 <div class="rounded-lg bg-white p-4 shadow-sm sm:p-6">
                     <p class="text-sm text-gray-600">{{ $t('admin.import.intro') }}</p>
                     <p class="mt-2 text-xs text-gray-500">{{ $t('admin.import.sample') }}</p>
