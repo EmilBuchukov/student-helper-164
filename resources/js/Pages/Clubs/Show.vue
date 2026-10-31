@@ -19,7 +19,7 @@ const options = { preserveScroll: true, onStart: () => (busy.value = true), onFi
 
 const join = () => router.post(route('clubs.join', props.club.slug), {}, options);
 const leave = async () => {
-    if (await confirmDialog(t('clubs.confirm_leave'))) router.delete(route('clubs.leave', props.club.slug), options);
+    if (await confirmDialog(t('clubs.confirm_leave'), { danger: false })) router.delete(route('clubs.leave', props.club.slug), options);
 };
 const destroy = async () => {
     if (await confirmDialog(t('common.confirm_delete'))) router.delete(route('clubs.destroy', props.club.slug));

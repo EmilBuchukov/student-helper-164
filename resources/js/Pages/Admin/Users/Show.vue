@@ -21,7 +21,7 @@ const suspendForm = useForm({ reason: '' });
 
 const saveRole = () => roleForm.patch(route('admin.users.role', props.user.id), { preserveScroll: true });
 const suspend = async () => {
-    if (await confirmDialog(t('admin.users.confirm_suspend'))) {
+    if (await confirmDialog(t('admin.users.confirm_suspend'), { confirmLabel: t('confirm.confirm') })) {
         suspendForm.post(route('admin.users.suspend', props.user.id), { preserveScroll: true, onSuccess: () => suspendForm.reset() });
     }
 };
