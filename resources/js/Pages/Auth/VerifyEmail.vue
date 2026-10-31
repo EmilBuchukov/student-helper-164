@@ -1,14 +1,10 @@
 <script setup>
+import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import Button from '@/Components/ui/Button.vue';
 
-const props = defineProps({
-    status: {
-        type: String,
-    },
-});
+const props = defineProps({ status: { type: String } });
 
 const form = useForm({});
 
@@ -16,43 +12,18 @@ const submit = () => {
     form.post(route('verification.send'));
 };
 
-const verificationLinkSent = computed(
-    () => props.status === 'verification-link-sent',
-);
+const verificationLinkSent = computed(() => props.status === 'verification-link-sent');
 </script>
 
 <template>
-    <GuestLayout :title="$t('auth.verify_title')">
+    <GuestLayout :title="$t('auth.verify_title')" :intro="$t('auth.verify_intro')">
         <Head :title="$t('auth.verify_title')" />
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ $t('auth.verify_intro') }}
-        </div>
+        <p v-if="verificationLinkSent" class="mb-6 rounded border border-success/30 bg-success-soft px-4 py-3 text-sm text-success" role="status">{{ $t('auth.verify_sent') }}</p>
 
-        <div
-            class="mb-4 text-sm font-medium text-green-600"
-            v-if="verificationLinkSent"
-        >
-            {{ $t('auth.verify_sent') }}
-        </div>
-
-        <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    {{ $t('auth.verify_resend') }}
-                </PrimaryButton>
-
-                <Link
-                    :href="route('logout')"
-                    method="post"
-                    as="button"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    >{{ $t('auth.logout') }}</Link
-                >
-            </div>
+        <form class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" @submit.prevent="submit">
+            <Button type="submit" size="lg" :loading="form.processing">{{ $t('auth.verify_resend') }}</Button>
+            <Button :href="route('logout')" method="post" variant="ghost">{{ $t('auth.logout') }}</Button>
         </form>
     </GuestLayout>
 </template>

@@ -16,6 +16,25 @@ Features: whitelist-restricted registration/login, exams & study materials, Q&A,
 
 UI language is Bulgarian (`APP_LOCALE=bg`), timezone `Europe/Sofia`.
 
+## Design
+
+Editorial, paper-and-ink interface in the red and gold of the Spanish flag, with a nod to Cervantes (serif display type, a gold rule, a restrained azulejo pattern). Full brief, exact token values and component list: [`docs/design.md`](docs/design.md).
+
+- **Tokens:** CSS variables in `resources/css/tokens.css` (light + warm-charcoal dark), mapped to semantic Tailwind colours (`bg-canvas`, `text-ink`, `bg-primary`, `text-accent-ink`, …) in `tailwind.config.js`.
+- **Fonts:** Source Serif 4 (headings) and Geologica (UI), self-hosted via `@fontsource-variable/*`; both ship Bulgarian localized Cyrillic forms (`lang="bg"`). No external font CDN.
+- **Components:** `resources/js/Components/ui/` — Reka UI primitives + `class-variance-authority` variants, Lucide icons.
+- **Theme:** light / dark / system toggle in the header, stored in `localStorage`; defaults to the OS preference.
+- **Styleguide:** `/styleguide` (admins, or anyone when `APP_ENV=local`) shows tokens, type and every component.
+
+| Landing | Q&A (dark) | Mobile |
+| --- | --- | --- |
+| ![Landing](docs/screenshots/home-light-1440.png) | ![Q&A](docs/screenshots/questions-1-dark-1440.png) | ![Exams on mobile](docs/screenshots/exams-light-390.png) |
+| ![Exam detail](docs/screenshots/exams-1-light-1440.png) | ![Channel (dark)](docs/screenshots/channels-12-dark-1440.png) | ![Dashboard on mobile, dark](docs/screenshots/dashboard-dark-390.png) |
+
+More in [`docs/screenshots/`](docs/screenshots/) (every main page, light and dark, 390 px and 1440 px).
+
+**After pulling the redesign run `npm install` once** (new packages: Reka UI, Lucide, Fontsource fonts, cva, clsx, tailwind-merge), then `npm run build` or `npm run dev`. With Sail: `sail npm install && sail npm run build`. In WSL keep the repo inside the Linux filesystem (`~/…`, not `/mnt/c/…`) so Vite's file watching works.
+
 ---
 
 ## Windows + WSL2 setup

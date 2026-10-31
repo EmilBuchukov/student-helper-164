@@ -15,6 +15,12 @@ createInertiaApp({
             `./Pages/${name}.vue`,
             import.meta.glob('./Pages/**/*.vue'),
         ),
+    defaults: {
+        // Cross-fade full page navigations; filters, polling and form posts stay instant.
+        visitOptions: (href, options) => ({
+            viewTransition: (options.method ?? 'get') === 'get' && !options.preserveState && !options.only?.length,
+        }),
+    },
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
@@ -23,7 +29,8 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#b91c1c',
+        color: '#AA151B',
+        delay: 150,
     },
 });
 

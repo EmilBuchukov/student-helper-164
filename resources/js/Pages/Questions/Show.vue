@@ -1,4 +1,7 @@
 <script setup>
+import { ArrowLeft, CheckCircle2 } from 'lucide-vue-next';
+import Badge from '@/Components/ui/Badge.vue';
+import { fieldClasses } from '@/Components/ui/variants';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import InputError from '@/Components/InputError.vue';
@@ -7,6 +10,7 @@ import ReportButton from '@/Components/ReportButton.vue';
 import VoteButton from '@/Components/VoteButton.vue';
 import { formatDateTime } from '@/format';
 import { t } from '@/i18n';
+import { confirmDialog } from '@/Components/ui/confirm';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -39,8 +43,8 @@ const saveEdit = (answer) => {
     });
 };
 
-const destroy = (url) => {
-    if (confirm(t('common.confirm_delete'))) {
+const destroy = async (url) => {
+    if (await confirmDialog(t('common.confirm_delete'))) {
         router.delete(url, { preserveScroll: true });
     }
 };
@@ -53,12 +57,12 @@ const accept = (answer) => router.post(route('answers.accept', answer.id), {}, {
 
     <AppLayout>
         <template #header>
-            <Link :href="route('questions.index')" class="text-sm text-gray-500 hover:text-gray-800">← {{ $t('questions.title') }}</Link>
+            <Link :href="route('questions.index')" class="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-ink-muted hover:text-ink"><ArrowLeft class="size-4" aria-hidden="true" />{{ $t('questions.title') }}</Link>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <article class="flex gap-3 rounded-lg bg-white p-4 shadow-sm sm:gap-4 sm:p-6">
+        <div>
+            <div class="mx-auto max-w-4xl space-y-6">
+                <article class="flex gap-4 border-b border-line pb-8 sm:gap-6">
                     <VoteButton
                         :url="route('questions.vote', question.id)"
                         :count="question.votes_count"
@@ -69,22 +73,22 @@ const accept = (answer) => router.post(route('answers.accept', answer.id), {}, {
                         <div class="flex flex-wrap items-center gap-2">
                             <span
                                 class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                :class="question.resolved ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'"
+                                :class="question.resolved ? 'bg-success-soft text-success' : 'bg-accent-soft text-accent-ink'"
                             >
                                 {{ question.resolved ? $t('questions.resolved') : $t('questions.unresolved') }}
                             </span>
-                            <span v-if="question.subject" class="text-xs font-semibold uppercase text-red-700">{{ question.subject }}</span>
-                            <span class="text-xs text-gray-500">{{ question.audience }}</span>
+                            <span v-if="question.subject" class="text-xs font-semibold uppercase tracking-[0.1em] text-primary-ink">{{ question.subject }}</span>
+                            <span class="text-xs text-ink-subtle">{{ question.audience }}</span>
                         </div>
-                        <h1 class="mt-2 break-words text-xl font-semibold text-gray-900">{{ question.title }}</h1>
-                        <div class="mt-3 whitespace-pre-line break-words text-gray-700">{{ question.body }}</div>
-                        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                        <h1 class="mt-3 break-words font-display text-title-1 font-semibold text-ink">{{ question.title }}</h1>
+                        <div class="prose-body mt-5">{{ question.body }}</div>
+                        <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-subtle">
                             <span>
                                 {{ $t('questions.asked_by', { name: question.author ?? $t('common.deleted_user') }) }} ·
                                 {{ formatDateTime(question.created_at) }}<template v-if="question.edited"> · {{ $t('questions.edited') }}</template>
                             </span>
-                            <Link v-if="question.can.update" :href="route('questions.edit', question.id)" class="hover:text-gray-800">{{ $t('common.edit') }}</Link>
-                            <button v-if="question.can.delete" type="button" class="text-red-700 hover:underline" @click="destroy(route('questions.destroy', question.id))">
+                            <Link v-if="question.can.update" :href="route('questions.edit', question.id)" class="hover:text-ink">{{ $t('common.edit') }}</Link>
+                            <button v-if="question.can.delete" type="button" class="text-primary-ink hover:underline" @click="destroy(route('questions.destroy', question.id))">
                                 {{ $t('common.delete') }}
                             </button>
                             <ReportButton v-if="question.can.report" type="question" :id="question.id" />
@@ -92,40 +96,40 @@ const accept = (answer) => router.post(route('answers.accept', answer.id), {}, {
                     </div>
                 </article>
 
-                <section class="space-y-3">
-                    <h2 class="text-lg font-semibold text-gray-900">{{ $t('answers.title') }} ({{ answers.length }})</h2>
+                <section class="space-y-4">
+                    <h2 class="flex items-baseline gap-3 font-display text-title-2 font-semibold text-ink">{{ $t('answers.title') }} <span class="font-sans text-base font-medium tabular-nums text-ink-subtle">{{ answers.length }}</span></h2>
 
                     <EmptyState v-if="answers.length === 0" :title="$t('answers.empty')" />
 
                     <article
                         v-for="answer in answers"
                         :key="answer.id"
-                        class="flex gap-3 rounded-lg bg-white p-4 shadow-sm sm:gap-4"
-                        :class="{ 'ring-2 ring-green-500': answer.accepted }"
+                        class="flex gap-4 rounded border border-line bg-surface p-4 sm:p-5"
+                        :class="{ 'border-accent bg-accent-soft/40 shadow-[inset_4px_0_0_rgb(var(--accent))]': answer.accepted }"
                     >
                         <VoteButton :url="route('answers.vote', answer.id)" :count="answer.votes_count" :voted="answer.voted" :can-vote="answer.can.vote" />
                         <div class="min-w-0 flex-1">
-                            <p v-if="answer.accepted" class="mb-2 text-xs font-semibold text-green-700">✓ {{ $t('answers.accepted_badge') }}</p>
+                            <Badge v-if="answer.accepted" tone="accent" class="mb-3"><CheckCircle2 aria-hidden="true" />{{ $t('answers.accepted_badge') }}</Badge>
 
                             <form v-if="editingId === answer.id" class="space-y-2" @submit.prevent="saveEdit(answer)">
-                                <textarea v-model="editForm.body" rows="4" maxlength="10000" required class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500" />
+                                <textarea v-model="editForm.body" rows="4" maxlength="10000" required :class="fieldClasses + ' py-2.5'" />
                                 <InputError :message="editForm.errors.body" />
                                 <div class="flex gap-2">
                                     <PrimaryButton :disabled="editForm.processing">{{ $t('common.save') }}</PrimaryButton>
-                                    <button type="button" class="text-sm text-gray-600" @click="editingId = null">{{ $t('common.cancel') }}</button>
+                                    <button type="button" class="text-sm text-ink-muted" @click="editingId = null">{{ $t('common.cancel') }}</button>
                                 </div>
                             </form>
-                            <div v-else class="whitespace-pre-line break-words text-gray-700">{{ answer.body }}</div>
+                            <div v-else class="prose-body text-base">{{ answer.body }}</div>
 
-                            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                            <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-subtle">
                                 <span>
                                     {{ answer.author ?? $t('common.deleted_user') }} · {{ formatDateTime(answer.created_at) }}<template v-if="answer.edited"> · {{ $t('questions.edited') }}</template>
                                 </span>
-                                <button v-if="question.can.accept" type="button" class="font-medium text-green-700 hover:underline" @click="accept(answer)">
+                                <button v-if="question.can.accept" type="button" class="font-medium text-success hover:underline" @click="accept(answer)">
                                     {{ answer.accepted ? $t('answers.unaccept') : $t('answers.accept') }}
                                 </button>
-                                <button v-if="answer.can.update && editingId !== answer.id" type="button" class="hover:text-gray-800" @click="startEdit(answer)">{{ $t('common.edit') }}</button>
-                                <button v-if="answer.can.delete" type="button" class="text-red-700 hover:underline" @click="destroy(route('answers.destroy', answer.id))">
+                                <button v-if="answer.can.update && editingId !== answer.id" type="button" class="hover:text-ink" @click="startEdit(answer)">{{ $t('common.edit') }}</button>
+                                <button v-if="answer.can.delete" type="button" class="text-primary-ink hover:underline" @click="destroy(route('answers.destroy', answer.id))">
                                     {{ $t('common.delete') }}
                                 </button>
                                 <ReportButton v-if="answer.can.report" type="answer" :id="answer.id" />
@@ -134,15 +138,15 @@ const accept = (answer) => router.post(route('answers.accept', answer.id), {}, {
                     </article>
                 </section>
 
-                <form v-if="question.can.answer" class="space-y-3 rounded-lg bg-white p-4 shadow-sm sm:p-6" @submit.prevent="submitAnswer">
-                    <label for="answer-body" class="block font-semibold text-gray-900">{{ $t('answers.body') }}</label>
+                <form v-if="question.can.answer" class="space-y-4 border-t-2 border-ink pt-6" @submit.prevent="submitAnswer">
+                    <label for="answer-body" class="block font-display text-title-3 font-semibold text-ink">{{ $t('answers.body') }}</label>
                     <textarea
                         id="answer-body"
                         v-model="answerForm.body"
                         rows="5"
                         maxlength="10000"
                         required
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                        :class="fieldClasses + ' py-2.5 leading-relaxed'"
                         :placeholder="$t('answers.placeholder')"
                     />
                     <InputError :message="answerForm.errors.body" />

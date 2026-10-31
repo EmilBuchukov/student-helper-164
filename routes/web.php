@@ -20,6 +20,7 @@ use App\Http\Controllers\Questions\AnswerController;
 use App\Http\Controllers\Questions\QuestionController;
 use App\Http\Controllers\Questions\VoteController;
 use App\Http\Controllers\ReportController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,6 +34,11 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
+    Route::get('/styleguide', function (Request $request) {
+        abort_unless(app()->environment('local') || $request->user()->isAdmin(), 403);
+
+        return Inertia::render('Styleguide');
+    })->name('styleguide');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 
     // Exams & materials

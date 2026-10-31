@@ -1,10 +1,11 @@
 <script setup>
-import InputError from '@/Components/InputError.vue';
-import Modal from '@/Components/Modal.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { useForm } from '@inertiajs/vue3';
+import { Flag } from 'lucide-vue-next';
 import { ref } from 'vue';
+import Button from '@/Components/ui/Button.vue';
+import Dialog from '@/Components/ui/Dialog.vue';
+import FormField from '@/Components/ui/FormField.vue';
+import Textarea from '@/Components/ui/Textarea.vue';
 
 const props = defineProps({
     type: { type: String, required: true },
@@ -26,30 +27,19 @@ const submit = () => {
 </script>
 
 <template>
-    <button type="button" class="text-xs text-gray-500 hover:text-red-700" @click="open = true">
+    <button type="button" class="inline-flex min-h-9 items-center gap-1.5 rounded px-2 text-sm text-ink-subtle transition-colors hover:bg-sunken hover:text-danger" @click="open = true">
+        <Flag class="size-3.5" aria-hidden="true" />
         {{ $t('reports.report') }}
     </button>
-
-    <Modal :show="open" max-width="md" @close="close">
-        <form class="space-y-4 p-6" @submit.prevent="submit">
-            <h3 class="text-lg font-semibold text-gray-900">{{ $t('reports.title') }}</h3>
-            <div>
-                <label :for="`report-${type}-${id}`" class="block text-sm font-medium text-gray-700">{{ $t('reports.reason') }}</label>
-                <textarea
-                    :id="`report-${type}-${id}`"
-                    v-model="form.reason"
-                    rows="3"
-                    maxlength="1000"
-                    required
-                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500"
-                    :placeholder="$t('reports.reason_placeholder')"
-                />
-                <InputError class="mt-2" :message="form.errors.reason || form.errors.type || form.errors.id" />
-            </div>
-            <div class="flex justify-end gap-2">
-                <SecondaryButton type="button" @click="close">{{ $t('common.cancel') }}</SecondaryButton>
-                <PrimaryButton :disabled="form.processing">{{ $t('reports.submit') }}</PrimaryButton>
-            </div>
+    <Dialog v-model:open="open" :title="$t('reports.title')" @update:open="(value) => !value && close()">
+        <form :id="`report-form-${type}-${id}`" @submit.prevent="submit">
+            <FormField v-slot="field" :id="`report-${type}-${id}`" :label="$t('reports.reason')" :error="form.errors.reason || form.errors.type || form.errors.id">
+                <Textarea :id="field.id" v-model="form.reason" rows="3" maxlength="1000" required :invalid="field.invalid" :aria-describedby="field.describedby" :placeholder="$t('reports.reason_placeholder')" />
+            </FormField>
         </form>
-    </Modal>
+        <template #footer>
+            <Button variant="secondary" @click="close">{{ $t('common.cancel') }}</Button>
+            <Button type="submit" :form="`report-form-${type}-${id}`" :loading="form.processing">{{ $t('reports.submit') }}</Button>
+        </template>
+    </Dialog>
 </template>

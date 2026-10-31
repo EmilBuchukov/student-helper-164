@@ -21,14 +21,14 @@ const apply = () => router.get(route('admin.audit.index'), action.value ? { acti
 
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ $t('admin.audit.title') }}</h2>
-            <p class="mt-1 text-sm text-gray-600">{{ $t('admin.audit.intro') }}</p>
+            <h1 class="font-display text-title-1 font-semibold text-ink">{{ $t('admin.audit.title') }}</h1>
+            <p class="mt-1 text-sm text-ink-muted">{{ $t('admin.audit.intro') }}</p>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-5xl space-y-4 px-4 sm:px-6 lg:px-8">
-                <div class="rounded-lg bg-white p-4 shadow-sm">
-                    <label class="block max-w-xs text-sm text-gray-700">
+        <div>
+            <div class="mx-auto max-w-5xl space-y-4">
+                <div class="rounded border border-line bg-surface p-4">
+                    <label class="block max-w-xs text-sm text-ink-muted">
                         {{ $t('admin.audit.action') }}
                         <SelectInput v-model="action" class="mt-1 block w-full" @change="apply">
                             <option value="">{{ $t('admin.audit.all_actions') }}</option>
@@ -36,7 +36,7 @@ const apply = () => router.get(route('admin.audit.index'), action.value ? { acti
                         </SelectInput>
                     </label>
                 </div>
-                <div class="rounded-lg bg-white p-4 shadow-sm">
+                <div class="rounded border border-line bg-surface p-4">
                     <AuditList :logs="logs.data" />
                 </div>
                 <Pagination :links="logs.links" />

@@ -1,4 +1,6 @@
 <script setup>
+import { ArrowUpRight } from 'lucide-vue-next';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AuditList from '@/Pages/Admin/Audit/AuditList.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -33,41 +35,38 @@ const links = [
     <Head :title="$t('admin.dashboard.title')" />
 
     <AppLayout>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ $t('admin.dashboard.title') }}</h2>
-            <p class="mt-1 text-sm text-gray-600">{{ $t('admin.dashboard.intro') }}</p>
-        </template>
+        <PageHeader :title="$t('admin.dashboard.title')" :lead="$t('admin.dashboard.intro')" :kicker="$t('nav.admin')" />
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <Link
-                        v-for="card in cards"
-                        :key="card.key"
-                        :href="route(card.route, card.query ?? {})"
-                        class="rounded-lg bg-white p-4 shadow-sm transition hover:shadow"
-                        :class="{ 'ring-2 ring-red-500': card.highlight && counts[card.key] > 0 }"
-                    >
-                        <p class="text-2xl font-bold text-gray-900">{{ counts[card.key] }}</p>
-                        <p class="mt-1 text-sm text-gray-600">{{ $t(`admin.dashboard.counts.${card.key}`) }}</p>
-                    </Link>
-                </div>
+        <div class="grid grid-cols-2 md:grid-cols-4">
+            <Link
+                v-for="card in cards"
+                :key="card.key"
+                :href="route(card.route, card.query ?? {})"
+                class="group relative flex flex-col-reverse border-b border-line p-4 transition-colors hover:bg-surface max-md:[&:nth-child(odd)]:border-e md:[&:not(:nth-child(4n))]:border-e sm:p-6"
+            >
+                <p class="mt-2 text-sm font-medium text-ink-muted">{{ $t(`admin.dashboard.counts.${card.key}`) }}</p>
+                <p class="font-display text-5xl font-semibold leading-none tabular-nums sm:text-6xl" :class="card.highlight && counts[card.key] > 0 ? 'text-primary-ink' : 'text-ink'">
+                    {{ counts[card.key] }}
+                </p>
+                <ArrowUpRight class="absolute right-4 top-4 size-4 text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+            </Link>
+        </div>
 
-                <div class="grid gap-6 lg:grid-cols-3">
-                    <section class="rounded-lg bg-white p-4 shadow-sm">
-                        <h3 class="font-semibold text-gray-900">{{ $t('admin.dashboard.quick_links') }}</h3>
-                        <ul class="mt-3 space-y-2 text-sm">
-                            <li v-for="link in links" :key="link.route">
-                                <Link :href="route(link.route)" class="text-red-700 hover:underline">{{ $t(link.label) }}</Link>
-                            </li>
-                        </ul>
-                    </section>
-                    <section class="rounded-lg bg-white p-4 shadow-sm lg:col-span-2">
-                        <h3 class="font-semibold text-gray-900">{{ $t('admin.dashboard.recent') }}</h3>
-                        <AuditList class="mt-3" :logs="recent" />
-                    </section>
-                </div>
-            </div>
+        <div class="mt-10 grid gap-10 lg:grid-cols-12">
+            <section class="lg:col-span-4">
+                <h2 class="kicker">{{ $t('admin.dashboard.quick_links') }}</h2>
+                <ul class="mt-4 divide-y divide-line border-y border-line">
+                    <li v-for="link in links" :key="link.route">
+                        <Link :href="route(link.route)" class="group flex min-h-12 items-center justify-between py-2 font-medium text-ink hover:text-primary-ink">
+                            {{ $t(link.label) }}<ArrowUpRight class="size-4 text-ink-subtle transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                        </Link>
+                    </li>
+                </ul>
+            </section>
+            <section class="lg:col-span-8">
+                <h2 class="kicker">{{ $t('admin.dashboard.recent') }}</h2>
+                <AuditList class="mt-4" :logs="recent" />
+            </section>
         </div>
     </AppLayout>
 </template>

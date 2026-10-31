@@ -1,14 +1,18 @@
 <script setup>
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Download, FileText, Pencil, Trash2 } from 'lucide-vue-next';
+import { ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import EmptyState from '@/Components/EmptyState.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import Button from '@/Components/ui/Button.vue';
+import DateBlock from '@/Components/ui/DateBlock.vue';
+import EmptyState from '@/Components/ui/EmptyState.vue';
+import FormField from '@/Components/ui/FormField.vue';
+import IconButton from '@/Components/ui/IconButton.vue';
+import Input from '@/Components/ui/Input.vue';
+import Kicker from '@/Components/ui/Kicker.vue';
+import { confirmDialog } from '@/Components/ui/confirm';
 import { formatDate, formatDateTime, formatSize } from '@/format';
 import { t } from '@/i18n';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
 const props = defineProps({
     exam: { type: Object, required: true },
@@ -30,14 +34,14 @@ const submit = () => {
     });
 };
 
-const destroyExam = () => {
-    if (confirm(t('common.confirm_delete'))) {
+const destroyExam = async () => {
+    if (await confirmDialog(t('common.confirm_delete'))) {
         router.delete(route('exams.destroy', props.exam.id));
     }
 };
 
-const destroyMaterial = (material) => {
-    if (confirm(t('common.confirm_delete'))) {
+const destroyMaterial = async (material) => {
+    if (await confirmDialog(t('common.confirm_delete'))) {
         router.delete(route('materials.destroy', material.id), { preserveScroll: true });
     }
 };
@@ -49,118 +53,81 @@ const accept = props.upload.extensions.map((e) => `.${e}`).join(',');
     <Head :title="exam.title" />
 
     <AppLayout>
-        <template #header>
-            <Link :href="route('exams.index')" class="text-sm text-gray-500 hover:text-gray-800">
-                ← {{ $t('exams.title') }}
-            </Link>
-            <div class="mt-2 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <p class="text-xs font-semibold uppercase text-red-700">{{ exam.subject }}</p>
-                    <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ exam.title }}</h2>
-                    <p class="mt-1 text-sm text-gray-600">
-                        {{ formatDate(exam.exam_date) }} · {{ $t(`exams.types.${exam.type}`) }} · {{ exam.audience }}
-                    </p>
-                    <p v-if="exam.creator" class="mt-1 text-xs text-gray-500">
-                        {{ $t('exams.created_by', { name: exam.creator }) }}
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <Link
-                        v-if="exam.can.update"
-                        :href="route('exams.edit', exam.id)"
-                        class="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                        {{ $t('common.edit') }}
-                    </Link>
-                    <button
-                        v-if="exam.can.delete"
-                        type="button"
-                        class="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
-                        @click="destroyExam"
-                    >
-                        {{ $t('common.delete') }}
-                    </button>
-                </div>
+        <Link :href="route('exams.index')" class="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-ink-muted hover:text-ink">
+            <ArrowLeft class="size-4" aria-hidden="true" />{{ $t('exams.title') }}
+        </Link>
+
+        <header class="mt-4 flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-start">
+            <DateBlock :date="exam.exam_date" size="lg" />
+            <div class="min-w-0 flex-1">
+                <Kicker>{{ exam.subject }}</Kicker>
+                <h1 class="mt-2 break-words font-display text-title-1 font-semibold text-ink">{{ exam.title }}</h1>
+                <p class="mt-3 text-ink-muted">{{ formatDate(exam.exam_date) }} · {{ $t(`exams.types.${exam.type}`) }} · {{ exam.audience }}</p>
+                <p v-if="exam.creator" class="mt-1 text-sm text-ink-subtle">{{ $t('exams.created_by', { name: exam.creator }) }}</p>
             </div>
-        </template>
+            <div v-if="exam.can.update || exam.can.delete" class="flex gap-2">
+                <Button v-if="exam.can.update" :href="route('exams.edit', exam.id)" variant="secondary" size="sm"><Pencil aria-hidden="true" />{{ $t('common.edit') }}</Button>
+                <Button v-if="exam.can.delete" variant="danger" size="sm" @click="destroyExam"><Trash2 aria-hidden="true" />{{ $t('common.delete') }}</Button>
+            </div>
+        </header>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <div v-if="exam.description" class="whitespace-pre-line rounded-lg bg-white p-4 text-gray-700 shadow-sm sm:p-6">{{ exam.description }}</div>
+        <div class="mt-8 grid gap-10 lg:grid-cols-12">
+            <div class="space-y-10 lg:col-span-7">
+                <p v-if="exam.description" class="prose-body">{{ exam.description }}</p>
 
-                <section class="space-y-3">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ $t('materials.title') }}</h3>
+                <section>
+                    <h2 class="font-display text-title-3 font-semibold text-ink">{{ $t('materials.title') }}</h2>
 
-                    <EmptyState v-if="materials.length === 0" :title="$t('materials.empty')" />
+                    <EmptyState v-if="materials.length === 0" class="mt-4" compact :title="$t('materials.empty')" />
 
-                    <ul v-else class="divide-y divide-gray-100 rounded-lg bg-white shadow-sm">
-                        <li
-                            v-for="material in materials"
-                            :key="material.id"
-                            class="flex flex-wrap items-center justify-between gap-2 p-4"
-                        >
-                            <div class="min-w-0">
-                                <p class="font-medium text-gray-900">{{ material.title }}</p>
-                                <p class="break-all text-xs text-gray-500">
-                                    {{ material.original_name }} · {{ formatSize(material.size) }} ·
-                                    {{ material.author ?? $t('common.deleted_user') }} · {{ formatDateTime(material.created_at) }}
+                    <TransitionGroup v-else tag="ul" name="list" class="relative mt-4 divide-y divide-line border-y border-line">
+                        <li v-for="material in materials" :key="material.id" class="flex items-center gap-4 py-4">
+                            <span class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-soft text-primary-ink"><FileText class="size-5" aria-hidden="true" /></span>
+                            <div class="min-w-0 flex-1">
+                                <p class="break-words font-medium text-ink">{{ material.title }}</p>
+                                <p class="break-all text-sm text-ink-subtle">
+                                    {{ material.original_name }} · {{ formatSize(material.size) }} · {{ material.author ?? $t('common.deleted_user') }} · {{ formatDateTime(material.created_at) }}
                                 </p>
                             </div>
-                            <div class="flex gap-2">
-                                <a
-                                    :href="material.download_url"
-                                    class="rounded-md bg-gray-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
-                                >
-                                    {{ $t('materials.download') }}
-                                </a>
-                                <button
-                                    v-if="material.can_delete"
-                                    type="button"
-                                    class="rounded-md px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
-                                    @click="destroyMaterial(material)"
-                                >
-                                    {{ $t('common.delete') }}
-                                </button>
+                            <div class="flex shrink-0 gap-1">
+                                <Button :href="material.download_url" external variant="secondary" size="sm" class="max-sm:size-11 max-sm:px-0" :aria-label="$t('materials.download')">
+                                    <Download aria-hidden="true" /><span class="max-sm:sr-only">{{ $t('materials.download') }}</span>
+                                </Button>
+                                <IconButton v-if="material.can_delete" :label="$t('common.delete')" class="hover:text-danger" @click="destroyMaterial(material)"><Trash2 class="size-4" aria-hidden="true" /></IconButton>
                             </div>
                         </li>
-                    </ul>
+                    </TransitionGroup>
                 </section>
+            </div>
 
-                <section v-if="exam.can.upload" class="rounded-lg bg-white p-4 shadow-sm sm:p-6">
-                    <h3 class="font-semibold text-gray-900">{{ $t('materials.upload_title') }}</h3>
-                    <form class="mt-3 space-y-4" @submit.prevent="submit">
-                        <div>
-                            <InputLabel for="material-title" :value="$t('materials.title_field')" />
-                            <TextInput id="material-title" v-model="form.title" class="mt-1 block w-full" maxlength="255" required />
-                            <InputError class="mt-2" :message="form.errors.title" />
-                        </div>
-                        <div>
-                            <InputLabel for="material-file" :value="$t('materials.file')" />
+            <aside class="lg:col-span-5">
+                <section v-if="exam.can.upload" class="rounded border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24">
+                    <h2 class="font-display text-title-3 font-semibold text-ink">{{ $t('materials.upload_title') }}</h2>
+                    <form class="mt-5 flex flex-col gap-5" @submit.prevent="submit">
+                        <FormField v-slot="field" id="material-title" :label="$t('materials.title_field')" :error="form.errors.title">
+                            <Input :id="field.id" v-model="form.title" maxlength="255" required :invalid="field.invalid" :aria-describedby="field.describedby" />
+                        </FormField>
+                        <FormField v-slot="field" id="material-file" :label="$t('materials.file')" :error="form.errors.file" :hint="$t('materials.allowed', { types: upload.extensions.join(', '), max: upload.max_mb })">
                             <input
-                                id="material-file"
+                                :id="field.id"
                                 ref="fileInput"
                                 type="file"
                                 :accept="accept"
-                                class="mt-1 block w-full text-sm text-gray-700 file:me-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-gray-200"
+                                :aria-describedby="field.describedby"
+                                class="block w-full cursor-pointer rounded border border-dashed border-line-strong bg-canvas p-3 text-sm text-ink-muted file:me-3 file:cursor-pointer file:rounded file:border-0 file:bg-ink file:px-3 file:py-2 file:text-sm file:font-medium file:text-canvas hover:border-ink-subtle"
                                 @input="form.file = $event.target.files[0]"
                             />
-                            <p class="mt-1 text-xs text-gray-500">
-                                {{ $t('materials.allowed', { types: upload.extensions.join(', '), max: upload.max_mb }) }}
-                            </p>
-                            <InputError class="mt-2" :message="form.errors.file" />
+                        </FormField>
+                        <div v-if="form.progress" class="h-1.5 overflow-hidden rounded-full bg-sunken" role="progressbar" :aria-valuenow="form.progress.percentage" aria-valuemin="0" aria-valuemax="100">
+                            <div class="h-full bg-primary transition-[width] duration-200" :style="{ width: `${form.progress.percentage}%` }" />
                         </div>
-                        <div v-if="form.progress" class="h-2 overflow-hidden rounded bg-gray-100">
-                            <div class="h-2 bg-red-600" :style="{ width: `${form.progress.percentage}%` }" />
-                        </div>
-                        <PrimaryButton :disabled="form.processing || !form.file">
+                        <Button type="submit" :disabled="!form.file" :loading="form.processing">
                             {{ form.processing ? $t('materials.uploading') : $t('materials.upload') }}
-                        </PrimaryButton>
+                        </Button>
                     </form>
                 </section>
-                <p v-else-if="$page.props.auth.user.role === 'teacher'" class="text-sm text-gray-500">
-                    {{ $t('materials.teacher_note') }}
-                </p>
-            </div>
+                <p v-else-if="$page.props.auth.user.role === 'teacher'" class="rounded border border-line bg-surface p-5 text-ink-muted">{{ $t('materials.teacher_note') }}</p>
+            </aside>
         </div>
     </AppLayout>
 </template>

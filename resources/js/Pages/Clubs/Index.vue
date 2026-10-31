@@ -1,6 +1,10 @@
 <script setup>
+import { CalendarDays, Plus, Users } from 'lucide-vue-next';
+import Badge from '@/Components/ui/Badge.vue';
+import Button from '@/Components/ui/Button.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import EmptyState from '@/Components/EmptyState.vue';
+import EmptyState from '@/Components/ui/EmptyState.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -13,44 +17,34 @@ defineProps({
     <Head :title="$t('clubs.title')" />
 
     <AppLayout>
-        <template #header>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ $t('clubs.title') }}</h2>
-                    <p class="mt-1 text-sm text-gray-600">{{ $t('clubs.intro') }}</p>
-                </div>
-                <div class="flex gap-2">
-                    <Link :href="route('events.index')" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                        {{ $t('events.title') }}
-                    </Link>
-                    <Link v-if="can.create" :href="route('clubs.create')" class="rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
-                        {{ $t('clubs.new') }}
-                    </Link>
-                </div>
-            </div>
-        </template>
+        <PageHeader :title="$t('clubs.title')" :lead="$t('clubs.intro')" :kicker="$t('app.name')">
+            <template #actions>
+                <Button :href="route('events.index')" variant="secondary"><CalendarDays aria-hidden="true" />{{ $t('events.title') }}</Button>
+                <Button v-if="can.create" :href="route('clubs.create')"><Plus aria-hidden="true" />{{ $t('clubs.new') }}</Button>
+            </template>
+        </PageHeader>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <EmptyState v-if="clubs.length === 0" :title="$t('clubs.empty')" />
+        <EmptyState v-if="clubs.length === 0" class="mt-8" :title="$t('clubs.empty')" />
 
-                <ul v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <li v-for="club in clubs" :key="club.id">
-                        <Link :href="route('clubs.show', club.slug)" class="flex h-full flex-col rounded-lg bg-white p-5 shadow-sm transition hover:shadow" :class="{ 'opacity-60': !club.is_active }">
-                            <div class="flex items-start justify-between gap-2">
-                                <h3 class="break-words font-semibold text-gray-900">{{ club.name }}</h3>
-                                <span v-if="club.is_member" class="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">{{ $t('clubs.member_badge') }}</span>
-                                <span v-else-if="!club.is_active" class="shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">{{ $t('clubs.inactive') }}</span>
-                            </div>
-                            <p class="mt-2 flex-1 break-words text-sm text-gray-600">{{ club.excerpt }}</p>
-                            <p class="mt-4 text-xs text-gray-500">
-                                {{ club.leader ?? $t('clubs.no_leader') }} · {{ $t('clubs.members_count', { count: club.members_count }) }}
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500">{{ $t('clubs.upcoming_count', { count: club.upcoming_events_count }) }}</p>
-                        </Link>
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <ol v-else class="mt-8 grid gap-x-10 border-t-2 border-ink md:grid-cols-2">
+            <li v-for="(club, i) in clubs" :key="club.id" class="border-b border-line">
+                <Link :href="route('clubs.show', club.slug)" class="group flex h-full gap-5 py-6" :class="{ 'opacity-60': !club.is_active }">
+                    <span class="w-12 shrink-0 font-display text-4xl font-semibold leading-none tabular-nums text-primary-ink" aria-hidden="true">{{ String(i + 1).padStart(2, '0') }}</span>
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <h2 class="break-words font-display text-title-3 font-semibold text-ink group-hover:underline group-hover:decoration-accent group-hover:decoration-2 group-hover:underline-offset-4">{{ club.name }}</h2>
+                            <Badge v-if="club.is_member" tone="success">{{ $t('clubs.member_badge') }}</Badge>
+                            <Badge v-else-if="!club.is_active">{{ $t('clubs.inactive') }}</Badge>
+                        </div>
+                        <p class="mt-2 flex-1 break-words text-ink-muted">{{ club.excerpt }}</p>
+                        <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-subtle">
+                            <span>{{ club.leader ?? $t('clubs.no_leader') }}</span>
+                            <span class="inline-flex items-center gap-1"><Users class="size-4" aria-hidden="true" />{{ $t('clubs.members_count', { count: club.members_count }) }}</span>
+                            <span class="inline-flex items-center gap-1"><CalendarDays class="size-4" aria-hidden="true" />{{ $t('clubs.upcoming_count', { count: club.upcoming_events_count }) }}</span>
+                        </div>
+                    </div>
+                </Link>
+            </li>
+        </ol>
     </AppLayout>
 </template>

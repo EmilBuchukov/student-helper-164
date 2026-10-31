@@ -36,17 +36,17 @@ const submit = () => {
 
     <AppLayout>
         <template #header>
-            <Link :href="editing ? route('questions.show', question.id) : route('questions.index')" class="text-sm text-gray-500 hover:text-gray-800">
+            <Link :href="editing ? route('questions.show', question.id) : route('questions.index')" class="text-sm text-ink-subtle hover:text-ink">
                 ← {{ $t('common.back') }}
             </Link>
-            <h2 class="mt-2 text-xl font-semibold leading-tight text-gray-800">
+            <h2 class="mt-2 text-xl font-semibold leading-tight text-ink">
                 {{ editing ? $t('questions.edit_title') : $t('questions.create_title') }}
             </h2>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-                <form class="space-y-5 rounded-lg bg-white p-4 shadow-sm sm:p-6" @submit.prevent="submit">
+        <div>
+            <div class="mx-auto max-w-3xl">
+                <form class="space-y-5 rounded border border-line bg-surface p-4 sm:p-6" @submit.prevent="submit">
                     <div>
                         <InputLabel for="title" :value="$t('questions.title_field')" />
                         <TextInput id="title" v-model="form.title" class="mt-1 block w-full" maxlength="200" required :placeholder="$t('questions.title_placeholder')" />
@@ -60,7 +60,7 @@ const submit = () => {
                             rows="8"
                             maxlength="10000"
                             required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                            class="mt-1 block w-full rounded border-line-strong focus:border-primary-ink focus:ring-focus/30"
                             :placeholder="$t('questions.body_placeholder')"
                         />
                         <InputError class="mt-2" :message="form.errors.body" />
@@ -80,7 +80,7 @@ const submit = () => {
                                 <option value="">{{ $t('scope.school_wide') }}</option>
                                 <option v-for="o in scopeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
                             </SelectInput>
-                            <p class="mt-1 text-xs text-gray-500">{{ $t('questions.scope_hint') }}</p>
+                            <p class="mt-1 text-xs text-ink-subtle">{{ $t('questions.scope_hint') }}</p>
                             <InputError class="mt-2" :message="form.errors.scope" />
                         </div>
                     </div>
