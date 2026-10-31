@@ -341,7 +341,7 @@ Frontend strings live in `lang/bg/ui.php`; they are shared to Vue as flattened k
 | Table | Columns | Notes |
 | --- | --- | --- |
 | `grades` | `id`, `number` | unique, CHECK 8–12 |
-| `profiles` | `id`, `name` | e.g. Испански език, Информатика |
+| `profiles` | `id`, `name` | Химия, Биология, Математика, Предприемачество, Физика, География, История |
 | `classes` | `id`, `grade_id` → grades, `letter`, `profile_id` → profiles (nullable) | unique (`grade_id`, `letter`); grade delete restricted, profile delete nulls |
 | `users` | Breeze columns + `role` (enum), `class_id` → classes (nullable), `is_active` | class delete nulls `class_id` |
 | `allowed_students` | `id`, `email` (unique), `class_id` → classes, `claimed_at`, `claimed_by` → users | class delete restricted; user delete nulls `claimed_by` |
