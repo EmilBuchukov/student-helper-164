@@ -1,5 +1,5 @@
 <script setup>
-import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle } from 'reka-ui';
+import { AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle } from 'reka-ui';
 import { cn } from '@/lib/utils';
 import { confirmState, settleConfirm } from './confirm';
 import { buttonVariants } from './variants';
@@ -13,13 +13,14 @@ import { buttonVariants } from './variants';
                 <AlertDialogTitle class="font-display text-title-3 font-semibold text-ink">{{ $t('confirm.title') }}</AlertDialogTitle>
                 <AlertDialogDescription class="mt-2 text-ink-muted">{{ confirmState.message }}</AlertDialogDescription>
                 <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <AlertDialogCancel :class="buttonVariants({ variant: 'secondary' })" @click="settleConfirm(false)">{{ $t('common.cancel') }}</AlertDialogCancel>
-                    <AlertDialogAction
+                    <AlertDialogCancel :class="buttonVariants({ variant: 'secondary' })">{{ $t('common.cancel') }}</AlertDialogCancel>
+                    <button
+                        type="button"
                         :class="cn(buttonVariants({ variant: 'primary' }), confirmState.danger && 'bg-danger text-white hover:bg-danger/90 dark:text-sand-950')"
                         @click="settleConfirm(true)"
                     >
                         {{ confirmState.confirmLabel || (confirmState.danger ? $t('confirm.delete') : $t('confirm.confirm')) }}
-                    </AlertDialogAction>
+                    </button>
                 </div>
             </AlertDialogContent>
         </AlertDialogPortal>
