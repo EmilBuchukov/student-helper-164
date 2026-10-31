@@ -24,7 +24,7 @@
                     <img src="/images/logo.png" alt="" class="size-10 rounded-full" width="40" height="40">
                     <span class="font-display text-xl font-semibold">{{ __('ui.app.name') }}</span>
                 </a>
-                <p class="kicker mt-12">{{ __('ui.errors.kicker', ['code' => trim($__env->yieldContent('code'))]) }}</p>
+                <div class="mt-12"><p class="kicker">{{ __('ui.errors.kicker', ['code' => trim($__env->yieldContent('code'))]) }}</p></div>
                 <h1 class="mt-4 font-display text-title-1 font-semibold">@yield('message')</h1>
                 <p class="mt-4 max-w-prose text-lg text-ink-muted">@yield('description')</p>
                 <div class="mt-8 flex flex-wrap gap-3">

@@ -6,6 +6,7 @@ const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: 'class',
+    safelist: [{ pattern: /^bg-(red|gold|sand)-(50|100|200|300|400|500|600|700|800|900)$/ }],
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
