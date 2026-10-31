@@ -1,5 +1,6 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
+import { CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const success = computed(() => usePage().props.flash?.success);
@@ -7,18 +8,10 @@ const error = computed(() => usePage().props.flash?.error);
 </script>
 
 <template>
-    <div
-        v-if="success"
-        class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
-        role="status"
-    >
-        {{ success }}
+    <div v-if="success" class="flex items-start gap-3 rounded border border-success/30 bg-success-soft px-4 py-3 text-sm text-success" role="status">
+        <CheckCircle2 class="mt-0.5 size-4 shrink-0" aria-hidden="true" />{{ success }}
     </div>
-    <div
-        v-if="error"
-        class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-        role="alert"
-    >
-        {{ error }}
+    <div v-if="error" class="flex items-start gap-3 rounded border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
+        <AlertCircle class="mt-0.5 size-4 shrink-0" aria-hidden="true" />{{ error }}
     </div>
 </template>
