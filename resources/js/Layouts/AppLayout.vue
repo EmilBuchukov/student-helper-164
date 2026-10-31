@@ -55,7 +55,7 @@ watch(() => page.url, () => (menuOpen.value = false));
                     <Wordmark />
                 </Link>
 
-                <nav v-if="user" :aria-label="$t('a11y.main_nav')" class="hidden h-full items-stretch lg:flex">
+                <nav v-if="user" :aria-label="$t('a11y.main_nav')" class="hidden h-full items-stretch xl:flex">
                     <Link
                         v-for="item in visibleNav"
                         :key="item.route"
@@ -109,7 +109,7 @@ watch(() => page.url, () => (menuOpen.value = false));
                         </DropdownMenu>
 
                         <DialogRoot v-model:open="menuOpen">
-                            <button type="button" class="inline-flex size-11 items-center justify-center rounded text-ink hover:bg-sunken lg:hidden" :aria-label="$t('nav.open_menu')" @click="menuOpen = true">
+                            <button type="button" class="inline-flex size-11 items-center justify-center rounded text-ink hover:bg-sunken xl:hidden" :aria-label="$t('nav.open_menu')" @click="menuOpen = true">
                                 <Menu class="size-6" aria-hidden="true" />
                             </button>
                             <DialogPortal>
