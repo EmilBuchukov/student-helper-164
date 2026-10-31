@@ -37,7 +37,7 @@ const links = [
     <AppLayout>
         <PageHeader :title="$t('admin.dashboard.title')" :lead="$t('admin.dashboard.intro')" :kicker="$t('nav.admin')" />
 
-        <div class="mt-8 grid grid-cols-2 border-t-2 border-ink md:grid-cols-4">
+        <div class="grid grid-cols-2 md:grid-cols-4">
             <Link
                 v-for="card in cards"
                 :key="card.key"
@@ -47,7 +47,6 @@ const links = [
                 <p class="mt-2 text-sm font-medium text-ink-muted">{{ $t(`admin.dashboard.counts.${card.key}`) }}</p>
                 <p class="font-display text-5xl font-semibold leading-none tabular-nums sm:text-6xl" :class="card.highlight && counts[card.key] > 0 ? 'text-primary-ink' : 'text-ink'">
                     {{ counts[card.key] }}
-                    <span v-if="card.highlight && counts[card.key] > 0" class="ms-1 inline-block size-2.5 translate-y-[-1.2em] rounded-full bg-accent" aria-hidden="true" />
                 </p>
                 <ArrowUpRight class="absolute right-4 top-4 size-4 text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
             </Link>
