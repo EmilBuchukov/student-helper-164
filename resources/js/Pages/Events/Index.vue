@@ -41,31 +41,31 @@ const setPast = (value) => {
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ $t('events.title') }}</h2>
-                    <p class="mt-1 text-sm text-gray-600">{{ $t('events.intro') }}</p>
+                    <h1 class="font-display text-title-1 font-semibold text-ink">{{ $t('events.title') }}</h1>
+                    <p class="mt-1 text-sm text-ink-muted">{{ $t('events.intro') }}</p>
                 </div>
-                <Link v-if="can.create" :href="route('events.create')" class="rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                <Link v-if="can.create" :href="route('events.create')" class="rounded bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover">
                     {{ $t('events.new') }}
                 </Link>
             </div>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-4xl space-y-4 px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm">
-                    <div class="flex rounded-md bg-gray-100 p-1">
+        <div>
+            <div class="mx-auto max-w-4xl space-y-4">
+                <div class="flex flex-wrap items-end gap-3 rounded border border-line bg-surface p-4">
+                    <div class="flex rounded bg-sunken p-1">
                         <button
                             v-for="value in [false, true]"
                             :key="String(value)"
                             type="button"
                             class="rounded px-3 py-1 text-sm"
-                            :class="form.past === value ? 'bg-white font-semibold shadow-sm' : 'text-gray-600'"
+                            :class="form.past === value ? 'border border-line bg-surface font-semibold ' : 'text-ink-muted'"
                             @click="setPast(value)"
                         >
                             {{ value ? $t('events.past') : $t('events.upcoming') }}
                         </button>
                     </div>
-                    <label class="min-w-[12rem] flex-1 text-sm text-gray-700">
+                    <label class="min-w-[12rem] flex-1 text-sm text-ink-muted">
                         {{ $t('events.club') }}
                         <SelectInput v-model="form.club" class="mt-1 block w-full" @change="apply">
                             <option value="">{{ $t('events.all') }}</option>
@@ -75,7 +75,7 @@ const setPast = (value) => {
                     </label>
                 </div>
 
-                <p v-if="loading" class="text-sm text-gray-500">{{ $t('common.loading') }}</p>
+                <p v-if="loading" class="text-sm text-ink-subtle">{{ $t('common.loading') }}</p>
                 <EmptyState v-else-if="events.data.length === 0" :title="$t('events.empty')" />
                 <div v-else class="space-y-3">
                     <EventCard v-for="event in events.data" :key="event.id" :event="event" />

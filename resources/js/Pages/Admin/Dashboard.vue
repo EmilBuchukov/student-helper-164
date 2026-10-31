@@ -34,36 +34,36 @@ const links = [
 
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">{{ $t('admin.dashboard.title') }}</h2>
-            <p class="mt-1 text-sm text-gray-600">{{ $t('admin.dashboard.intro') }}</p>
+            <h1 class="font-display text-title-1 font-semibold text-ink">{{ $t('admin.dashboard.title') }}</h1>
+            <p class="mt-1 text-sm text-ink-muted">{{ $t('admin.dashboard.intro') }}</p>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <div>
+            <div class="space-y-6">
                 <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
                     <Link
                         v-for="card in cards"
                         :key="card.key"
                         :href="route(card.route, card.query ?? {})"
-                        class="rounded-lg bg-white p-4 shadow-sm transition hover:shadow"
+                        class="rounded border border-line bg-surface p-4 transition"
                         :class="{ 'ring-2 ring-red-500': card.highlight && counts[card.key] > 0 }"
                     >
-                        <p class="text-2xl font-bold text-gray-900">{{ counts[card.key] }}</p>
-                        <p class="mt-1 text-sm text-gray-600">{{ $t(`admin.dashboard.counts.${card.key}`) }}</p>
+                        <p class="text-2xl font-bold text-ink">{{ counts[card.key] }}</p>
+                        <p class="mt-1 text-sm text-ink-muted">{{ $t(`admin.dashboard.counts.${card.key}`) }}</p>
                     </Link>
                 </div>
 
                 <div class="grid gap-6 lg:grid-cols-3">
-                    <section class="rounded-lg bg-white p-4 shadow-sm">
-                        <h3 class="font-semibold text-gray-900">{{ $t('admin.dashboard.quick_links') }}</h3>
+                    <section class="rounded border border-line bg-surface p-4">
+                        <h3 class="font-semibold text-ink">{{ $t('admin.dashboard.quick_links') }}</h3>
                         <ul class="mt-3 space-y-2 text-sm">
                             <li v-for="link in links" :key="link.route">
-                                <Link :href="route(link.route)" class="text-red-700 hover:underline">{{ $t(link.label) }}</Link>
+                                <Link :href="route(link.route)" class="text-primary-ink hover:underline">{{ $t(link.label) }}</Link>
                             </li>
                         </ul>
                     </section>
-                    <section class="rounded-lg bg-white p-4 shadow-sm lg:col-span-2">
-                        <h3 class="font-semibold text-gray-900">{{ $t('admin.dashboard.recent') }}</h3>
+                    <section class="rounded border border-line bg-surface p-4 lg:col-span-2">
+                        <h3 class="font-semibold text-ink">{{ $t('admin.dashboard.recent') }}</h3>
                         <AuditList class="mt-3" :logs="recent" />
                     </section>
                 </div>

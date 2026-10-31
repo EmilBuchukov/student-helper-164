@@ -11,6 +11,7 @@ import SelectInput from '@/Components/SelectInput.vue';
 import { formatDateTime } from '@/format';
 import { api } from '@/http';
 import { t } from '@/i18n';
+import { confirmDialog } from '@/Components/ui/confirm';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
@@ -138,7 +139,7 @@ const onKeydown = (event) => {
 };
 
 const destroy = async (message) => {
-    if (!confirm(t('common.confirm_delete'))) return;
+    if (!await confirmDialog(t('common.confirm_delete'))) return;
     try {
         await api('DELETE', route('messages.destroy', message.id));
         list.value = list.value.filter((m) => m.id !== message.id);
@@ -185,22 +186,22 @@ onBeforeUnmount(() => {
     <Head :title="channel ? channel.name : $t('channels.title')" />
 
     <AppLayout>
-        <div class="mx-auto max-w-7xl px-0 sm:px-6 sm:py-6 lg:px-8">
-            <div class="flex overflow-hidden bg-white shadow-sm sm:rounded-lg" style="height: calc(100vh - 7rem)">
-                <aside class="w-full shrink-0 overflow-y-auto border-gray-200 md:block md:w-64 md:border-e" :class="channel ? 'hidden' : 'block'">
-                    <h2 class="px-4 pb-2 pt-4 text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $t('channels.list') }}</h2>
-                    <p v-if="channels.length === 0" class="px-4 text-sm text-gray-500">{{ $t('channels.empty_list') }}</p>
+        <div class="px-0 sm:px-6 sm:py-6 lg:px-8">
+            <div class="flex overflow-hidden border border-line bg-surface sm:rounded" style="height: calc(100vh - 7rem)">
+                <aside class="w-full shrink-0 overflow-y-auto border-line md:block md:w-64 md:border-e" :class="channel ? 'hidden' : 'block'">
+                    <h2 class="px-4 pb-2 pt-4 text-sm font-semibold uppercase tracking-wide text-ink-subtle">{{ $t('channels.list') }}</h2>
+                    <p v-if="channels.length === 0" class="px-4 text-sm text-ink-subtle">{{ $t('channels.empty_list') }}</p>
                     <nav v-for="group in groups" :key="group.type" class="pb-3">
-                        <p class="px-4 py-1 text-xs font-medium text-gray-400">{{ $t(`channels.types.${group.type}`) }}</p>
+                        <p class="px-4 py-1 text-xs font-medium text-ink-subtle">{{ $t(`channels.types.${group.type}`) }}</p>
                         <Link
                             v-for="item in group.items"
                             :key="item.id"
                             :href="route('channels.show', item.id)"
-                            class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50"
-                            :class="channel?.id === item.id ? 'bg-red-50 font-semibold text-red-800' : 'text-gray-700'"
+                            class="flex items-center justify-between px-4 py-2 text-sm hover:bg-sunken"
+                            :class="channel?.id === item.id ? 'bg-primary-soft font-semibold text-primary-ink' : 'text-ink-muted'"
                         >
                             <span class="truncate"># {{ item.name }}</span>
-                            <span v-if="item.is_archived" class="ms-2 text-xs text-gray-400">{{ $t('channels.archived') }}</span>
+                            <span v-if="item.is_archived" class="ms-2 text-xs text-ink-subtle">{{ $t('channels.archived') }}</span>
                         </Link>
                     </nav>
                 </aside>
@@ -211,32 +212,32 @@ onBeforeUnmount(() => {
 
                 <section v-else class="flex min-w-0 flex-1 flex-col">
                     <header class="flex items-center gap-3 border-b px-4 py-3">
-                        <Link :href="route('channels.index')" class="text-sm text-gray-500 md:hidden">← {{ $t('channels.back_to_list') }}</Link>
-                        <h1 class="truncate font-semibold text-gray-900"># {{ channel.name }}</h1>
-                        <span v-if="offline" class="ms-auto text-xs text-amber-700">{{ $t('channels.connection_lost') }}</span>
+                        <Link :href="route('channels.index')" class="text-sm text-ink-subtle md:hidden">← {{ $t('channels.back_to_list') }}</Link>
+                        <h1 class="truncate font-semibold text-ink"># {{ channel.name }}</h1>
+                        <span v-if="offline" class="ms-auto text-xs text-accent-ink">{{ $t('channels.connection_lost') }}</span>
                     </header>
 
-                    <div v-if="channel.can.moderate && mutes.length" class="border-b bg-gray-50 px-4 py-2 text-xs text-gray-600">
+                    <div v-if="channel.can.moderate && mutes.length" class="border-b bg-sunken/60 px-4 py-2 text-xs text-ink-muted">
                         <span class="font-semibold">{{ $t('channels.active_mutes') }}:</span>
                         <span v-for="m in mutes" :key="m.id" class="ms-2 inline-flex items-center gap-1">
                             {{ m.user }} ({{ $t('channels.until', { time: formatDateTime(m.until) }) }}<template v-if="m.global">, {{ $t('channels.mute_global') }}</template>)
-                            <button type="button" class="text-red-700 hover:underline" @click="unmute(m)">{{ $t('channels.unmute') }}</button>
+                            <button type="button" class="text-primary-ink hover:underline" @click="unmute(m)">{{ $t('channels.unmute') }}</button>
                         </span>
                     </div>
 
                     <div ref="scroller" class="flex-1 space-y-3 overflow-y-auto px-4 py-4">
                         <div v-if="more" class="text-center">
-                            <button type="button" :disabled="loadingMore" class="text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50" @click="loadMore">
+                            <button type="button" :disabled="loadingMore" class="text-sm text-ink-muted hover:text-ink disabled:opacity-50" @click="loadMore">
                                 {{ loadingMore ? $t('common.loading') : $t('channels.load_more') }}
                             </button>
                         </div>
-                        <p v-if="list.length === 0" class="py-10 text-center text-sm text-gray-500">{{ $t('channels.no_messages') }}</p>
+                        <p v-if="list.length === 0" class="py-10 text-center text-sm text-ink-subtle">{{ $t('channels.no_messages') }}</p>
 
                         <div v-for="message in list" :key="message.id" class="group flex" :class="message.own ? 'justify-end' : 'justify-start'">
-                            <div class="max-w-[85%] rounded-lg px-3 py-2 sm:max-w-[70%]" :class="message.own ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-900'">
-                                <p v-if="!message.own" class="text-xs font-semibold text-gray-600">{{ message.author ?? $t('common.deleted_user') }}</p>
+                            <div class="max-w-[85%] rounded px-3 py-2 sm:max-w-[70%]" :class="message.own ? 'bg-primary text-on-primary' : 'bg-sunken text-ink'">
+                                <p v-if="!message.own" class="text-xs font-semibold text-ink-muted">{{ message.author ?? $t('common.deleted_user') }}</p>
                                 <p class="whitespace-pre-line break-words text-sm">{{ message.body }}</p>
-                                <div class="mt-1 flex flex-wrap items-center gap-x-3 text-[11px]" :class="message.own ? 'text-red-100' : 'text-gray-500'">
+                                <div class="mt-1 flex flex-wrap items-center gap-x-3 text-[11px]" :class="message.own ? 'text-red-100' : 'text-ink-subtle'">
                                     <span>{{ formatDateTime(message.created_at) }}</span>
                                     <button v-if="message.can.delete" type="button" class="hover:underline" @click="destroy(message)">{{ $t('common.delete') }}</button>
                                     <button v-if="message.can.mute" type="button" class="hover:underline" @click="openMute(message)">{{ $t('channels.mute') }}</button>
@@ -247,8 +248,8 @@ onBeforeUnmount(() => {
                     </div>
 
                     <footer class="border-t p-3">
-                        <p v-if="channel.is_archived" class="text-sm text-gray-500">{{ $t('channels.archived_notice') }}</p>
-                        <div v-else-if="currentMute" class="rounded-md bg-amber-50 p-3 text-sm text-amber-800" role="status">
+                        <p v-if="channel.is_archived" class="text-sm text-ink-subtle">{{ $t('channels.archived_notice') }}</p>
+                        <div v-else-if="currentMute" class="rounded bg-accent-soft p-3 text-sm text-accent-ink" role="status">
                             {{ $t('channels.muted_notice', { until: formatDateTime(currentMute.until) }) }}
                             <span v-if="currentMute.reason"> ({{ currentMute.reason }})</span>
                             <span v-if="currentMute.global" class="block text-xs">{{ $t('channels.muted_global') }}</span>
@@ -261,13 +262,13 @@ onBeforeUnmount(() => {
                                     v-model="body"
                                     rows="2"
                                     :maxlength="maxLength"
-                                    class="block w-full resize-none rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500"
+                                    class="block w-full resize-none rounded border-line-strong text-sm focus:border-primary-ink focus:ring-focus/30"
                                     :placeholder="$t('channels.placeholder')"
                                     @keydown="onKeydown"
                                 />
                                 <div class="mt-1 flex justify-between text-xs">
                                     <InputError :message="error" />
-                                    <span v-if="charsLeft < 200" class="ms-auto text-gray-500">{{ $t('channels.chars_left', { count: charsLeft }) }}</span>
+                                    <span v-if="charsLeft < 200" class="ms-auto text-ink-subtle">{{ $t('channels.chars_left', { count: charsLeft }) }}</span>
                                 </div>
                             </div>
                             <PrimaryButton :disabled="sending || !body.trim()" class="mb-5">{{ sending ? $t('channels.sending') : $t('channels.send') }}</PrimaryButton>
@@ -279,18 +280,18 @@ onBeforeUnmount(() => {
 
         <Modal :show="muteTarget !== null" max-width="md" @close="muteTarget = null">
             <form v-if="muteTarget" class="space-y-4 p-6" @submit.prevent="submitMute">
-                <h3 class="text-lg font-semibold text-gray-900">{{ $t('channels.mute_title', { name: muteTarget.author }) }}</h3>
-                <label class="block text-sm text-gray-700">
+                <h3 class="text-lg font-semibold text-ink">{{ $t('channels.mute_title', { name: muteTarget.author }) }}</h3>
+                <label class="block text-sm text-ink-muted">
                     {{ $t('channels.mute_duration') }}
                     <SelectInput v-model="muteForm.minutes" class="mt-1 block w-full">
                         <option v-for="d in muteDurations" :key="d" :value="d">{{ $t(`channels.durations.${d}`) }}</option>
                     </SelectInput>
                 </label>
-                <label class="block text-sm text-gray-700">
+                <label class="block text-sm text-ink-muted">
                     {{ $t('channels.mute_reason') }}
-                    <input v-model="muteForm.reason" type="text" maxlength="500" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500" />
+                    <input v-model="muteForm.reason" type="text" maxlength="500" class="mt-1 block w-full rounded border-line-strong text-sm focus:border-primary-ink focus:ring-focus/30" />
                 </label>
-                <label class="flex items-center gap-2 text-sm text-gray-700">
+                <label class="flex items-center gap-2 text-sm text-ink-muted">
                     <Checkbox v-model:checked="muteForm.global" />
                     {{ $t('channels.mute_global') }}
                 </label>

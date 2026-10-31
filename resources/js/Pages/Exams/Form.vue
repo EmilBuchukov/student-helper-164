@@ -37,14 +37,14 @@ const submit = () => {
 
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+            <h1 class="font-display text-title-1 font-semibold text-ink">
                 {{ exam ? $t('exams.edit') : $t('exams.new') }}
-            </h2>
+            </h1>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-                <form class="space-y-4 rounded-lg bg-white p-4 shadow-sm sm:p-6" @submit.prevent="submit">
+        <div>
+            <div class="mx-auto max-w-2xl">
+                <form class="space-y-4 rounded border border-line bg-surface p-4 sm:p-6" @submit.prevent="submit">
                     <div>
                         <InputLabel for="subject" :value="$t('exams.subject')" />
                         <TextInput
@@ -85,7 +85,7 @@ const submit = () => {
                             <option value="" disabled>{{ $t('scope.choose') }}</option>
                             <option v-for="o in scopeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
                         </SelectInput>
-                        <p class="mt-1 text-xs text-gray-500">{{ $t('exams.scope_hint') }}</p>
+                        <p class="mt-1 text-xs text-ink-subtle">{{ $t('exams.scope_hint') }}</p>
                         <InputError class="mt-2" :message="form.errors.scope" />
                     </div>
                     <div>
@@ -95,14 +95,14 @@ const submit = () => {
                             v-model="form.description"
                             rows="4"
                             maxlength="5000"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                            class="mt-1 block w-full rounded border-line-strong focus:border-primary-ink focus:ring-focus/30"
                         />
                         <InputError class="mt-2" :message="form.errors.description" />
                     </div>
                     <div class="flex items-center justify-end gap-3">
                         <Link
                             :href="exam ? route('exams.show', exam.id) : route('exams.index')"
-                            class="text-sm text-gray-600 hover:text-gray-900"
+                            class="text-sm text-ink-muted hover:text-ink"
                         >
                             {{ $t('common.cancel') }}
                         </Link>

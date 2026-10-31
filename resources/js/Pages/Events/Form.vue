@@ -40,13 +40,13 @@ const submit = () => {
 
     <AppLayout>
         <template #header>
-            <Link :href="editing ? route('events.show', event.id) : route('events.index')" class="text-sm text-gray-500 hover:text-gray-800">← {{ $t('common.back') }}</Link>
-            <h2 class="mt-2 text-xl font-semibold leading-tight text-gray-800">{{ editing ? $t('events.edit_title') : $t('events.create_title') }}</h2>
+            <Link :href="editing ? route('events.show', event.id) : route('events.index')" class="text-sm text-ink-subtle hover:text-ink">← {{ $t('common.back') }}</Link>
+            <h2 class="mt-2 text-xl font-semibold leading-tight text-ink">{{ editing ? $t('events.edit_title') : $t('events.create_title') }}</h2>
         </template>
 
-        <div class="py-6 sm:py-10">
-            <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-                <form class="space-y-5 rounded-lg bg-white p-4 shadow-sm sm:p-6" @submit.prevent="submit">
+        <div>
+            <div class="mx-auto max-w-3xl">
+                <form class="space-y-5 rounded border border-line bg-surface p-4 sm:p-6" @submit.prevent="submit">
                     <div>
                         <InputLabel for="club" :value="$t('events.club')" />
                         <SelectInput id="club" v-model="form.club_id" class="mt-1 block w-full">
@@ -79,7 +79,7 @@ const submit = () => {
                     </div>
                     <div>
                         <InputLabel for="description" :value="$t('events.description')" />
-                        <textarea id="description" v-model="form.description" rows="6" maxlength="5000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" />
+                        <textarea id="description" v-model="form.description" rows="6" maxlength="5000" class="mt-1 block w-full rounded border-line-strong focus:border-primary-ink focus:ring-focus/30" />
                         <InputError class="mt-2" :message="form.errors.description" />
                     </div>
                     <PrimaryButton :disabled="form.processing">{{ editing ? $t('common.save') : $t('common.create') }}</PrimaryButton>
