@@ -4,7 +4,6 @@ export const mainNav = [
     { label: 'nav.exams', route: 'exams.index', active: 'exams.*' },
     { label: 'nav.questions', route: 'questions.index', active: 'questions.*', hideFor: ['teacher'] },
     { label: 'nav.channels', route: 'channels.index', active: 'channels.*', hideFor: ['teacher'] },
-    { label: 'nav.rooms', route: 'rooms' },
     { label: 'nav.clubs', route: 'clubs.index', active: 'clubs.*' },
     { label: 'nav.events', route: 'events.index', active: 'events.*' },
 ];
