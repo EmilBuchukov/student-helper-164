@@ -193,7 +193,7 @@ watch(() => page.url, () => (menuOpen.value = false));
                     <Link
                         :href="route(item.route)"
                         :aria-current="isActive(item) ? 'page' : undefined"
-                        :class="['relative flex h-16 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium', isActive(item) ? 'text-primary-ink' : 'text-ink-subtle']"
+                        :class="['relative flex h-16 flex-col items-center justify-center gap-1 truncate px-0.5 text-[0.625rem] font-medium min-[400px]:text-[0.6875rem]', isActive(item) ? 'text-primary-ink' : 'text-ink-subtle']"
                     >
                         <span v-if="isActive(item)" class="absolute inset-x-5 top-0 h-0.5 bg-primary" aria-hidden="true" />
                         <component :is="icons[item.route]" class="size-5" :stroke-width="isActive(item) ? 2.25 : 1.75" aria-hidden="true" />
