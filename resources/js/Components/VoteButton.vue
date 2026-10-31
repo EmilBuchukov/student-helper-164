@@ -10,7 +10,7 @@ const props = defineProps({
     canVote: { type: Boolean, default: false },
 });
 
-// Optimistic: flip immediately, server response (or failure) restores the truth.
+// Optimistic: flip immediately; when the visit finishes (success, error or 429) resync to server props.
 const busy = ref(false);
 const localVoted = ref(props.voted);
 const localCount = ref(props.count);
@@ -26,11 +26,11 @@ const toggle = () => {
     router.post(props.url, {}, {
         preserveScroll: true,
         onStart: () => (busy.value = true),
-        onError: () => {
+        onFinish: () => {
             localVoted.value = props.voted;
             localCount.value = props.count;
+            busy.value = false;
         },
-        onFinish: () => (busy.value = false),
     });
 };
 </script>
