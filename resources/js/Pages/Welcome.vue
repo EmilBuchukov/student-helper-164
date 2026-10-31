@@ -5,7 +5,6 @@ import { Head, Link } from '@inertiajs/vue3';
 const features = [
     { title: 'nav.exams', text: 'welcome.feature_exams' },
     { title: 'nav.questions', text: 'welcome.feature_questions' },
-    { title: 'nav.rooms', text: 'welcome.feature_rooms' },
     { title: 'nav.clubs', text: 'welcome.feature_clubs' },
 ];
 </script>
@@ -60,7 +59,7 @@ const features = [
             <h2 class="text-xl font-semibold text-gray-900">
                 {{ $t('welcome.features_title') }}
             </h2>
-            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div
                     v-for="feature in features"
                     :key="feature.title"

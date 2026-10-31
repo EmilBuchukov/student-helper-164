@@ -14,38 +14,24 @@ class DemoUserSeeder extends Seeder
     public const DEMO_PASSWORD = 'password';
 
     /**
-     * Admin (from .env), a teacher, a moderator, 25 students and some unclaimed whitelist rows.
+     * One account per role (admin from .env, teacher, moderator, student) and one unclaimed whitelist row.
      */
     public function run(): void
     {
         $this->seedAdmin();
 
         $classes = SchoolClass::query()->ordered()->get();
+        $class = $classes->firstWhere('name', '11А') ?? $classes->first();
         $password = Hash::make(self::DEMO_PASSWORD);
 
         $this->upsertUser('teacher@example.com', 'Мария Петрова', Role::Teacher, null, $password);
+        $this->upsertStudent('moderator@example.com', 'Георги Иванов', Role::Moderator, $class, $password);
+        $this->upsertStudent('student@example.com', 'Иван Георгиев', Role::Student, $class, $password);
 
-        $this->upsertStudent('moderator@example.com', 'Георги Иванов', Role::Moderator, $classes->firstWhere('name', '11А'), $password);
-
-        $names = [
-            'Иван Георгиев', 'Елена Димитрова', 'Николай Стоянов', 'Мартина Колева', 'Петър Николов',
-            'Виктория Попова', 'Александър Христов', 'Габриела Тодорова', 'Даниел Маринов', 'Йоана Ангелова',
-            'Кристиян Василев', 'Симона Илиева', 'Борис Атанасов', 'Деница Петкова', 'Стефан Йорданов',
-            'Никол Методиева', 'Радослав Кирилов', 'Теодора Митева', 'Калоян Русев', 'Михаела Борисова',
-            'Владимир Симеонов', 'Анна-Мария Славова', 'Пламен Генов', 'Цветелина Найденова', 'Мартин Добрев',
-        ];
-
-        foreach ($names as $i => $name) {
-            $number = $i + 1;
-            $this->upsertStudent("student{$number}@example.com", $name, Role::Student, $classes[$i % $classes->count()], $password);
-        }
-
-        foreach (range(1, 8) as $i) {
-            AllowedStudent::firstOrCreate(
-                ['email' => "newstudent{$i}@example.com"],
-                ['class_id' => $classes[$i % $classes->count()]->id],
-            );
-        }
+        AllowedStudent::firstOrCreate(
+            ['email' => 'newstudent@example.com'],
+            ['class_id' => $classes->first()->id],
+        );
     }
 
     private function seedAdmin(): void

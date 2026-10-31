@@ -2,7 +2,6 @@
 
 Общностен сайт за учениците от **164. ГПИЕ „Мигел де Сервантес“** (София, 8.–12. клас).
 Features: whitelist-restricted registration/login, exams & study materials, Q&A, clubs & events, student-only channels, admin panel & moderation (see [Features](#features)).
-Room occupancy ("Стаи") is intentionally a placeholder ("Очаквайте скоро").
 
 ## Stack
 
@@ -136,17 +135,17 @@ Open **http://localhost:8000**.
 | Admin | `SEED_ADMIN_EMAIL` from `.env` (default `admin@example.com`) | `SEED_ADMIN_PASSWORD` from `.env` |
 | Teacher | `teacher@example.com` | `password` |
 | Moderator | `moderator@example.com` | `password` |
-| Student | `student1@example.com` … `student25@example.com` | `password` |
+| Student | `student@example.com` | `password` |
 
 Demo passwords are for local development only. If `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` are empty the seeder skips the admin account.
 
 ### Trying whitelist registration
 
 Registration only works for an email that is in `allowed_students` and not yet claimed.
-The seeder creates unclaimed rows `newstudent1@example.com` … `newstudent8@example.com`.
+The seeder creates one unclaimed row, `newstudent@example.com`.
 
-1. Go to `/register` and register with `newstudent1@example.com` → you get role `student` and the class from the whitelist row; the row is marked claimed.
-2. Try `someone@example.com` (not on the list) or `newstudent1@example.com` again → *„Този имейл не е в списъка на училището. Свържи се с администратор.“*
+1. Go to `/register` and register with `newstudent@example.com` → you get role `student` and the class from the whitelist row; the row is marked claimed.
+2. Try `someone@example.com` (not on the list) or `newstudent@example.com` again → *„Този имейл не е в списъка на училището. Свържи се с администратор.“*
 3. As admin, open **Админ → Импорт на ученици** (`/admin/students/import`) and upload [`docs/sample-students.csv`](docs/sample-students.csv) to see the created / skipped / invalid report. CSV format: header `email,grade,letter` (comma or semicolon, UTF-8, letter in Cyrillic, class must exist).
 
 New accounts must verify their email before reaching the dashboard (link in Mailpit or in `storage/logs/laravel.log`).
@@ -325,7 +324,7 @@ docs/sample-students.csv
 lang/bg/                                 auth, validation, passwords, pagination, ui (frontend strings)
 resources/js/
   Layouts/AppLayout.vue                  responsive navbar + mobile menu + footer
-  Pages/                                 Welcome, Dashboard, ComingSoon, Auth/*, Profile/*, Exams/*, Questions/*, Clubs/*,
+  Pages/                                 Welcome, Dashboard, Auth/*, Profile/*, Exams/*, Questions/*, Clubs/*,
                                          Events/*, Channels/Show, Admin/*, Moderation/Reports/Index
   http.js                                fetch wrapper (XSRF) for channel polling
   i18n.js                                `$t('key')` helper fed from lang/bg/ui.php via Inertia
@@ -342,7 +341,7 @@ Frontend strings live in `lang/bg/ui.php`; they are shared to Vue as flattened k
 | Table | Columns | Notes |
 | --- | --- | --- |
 | `grades` | `id`, `number` | unique, CHECK 8–12 |
-| `profiles` | `id`, `name` | e.g. Испански език, Информатика |
+| `profiles` | `id`, `name` | Химия, Биология, Математика, Предприемачество, Физика, География, История |
 | `classes` | `id`, `grade_id` → grades, `letter`, `profile_id` → profiles (nullable) | unique (`grade_id`, `letter`); grade delete restricted, profile delete nulls |
 | `users` | Breeze columns + `role` (enum), `class_id` → classes (nullable), `is_active` | class delete nulls `class_id` |
 | `allowed_students` | `id`, `email` (unique), `class_id` → classes, `claimed_at`, `claimed_by` → users | class delete restricted; user delete nulls `claimed_by` |
@@ -449,5 +448,5 @@ erDiagram
 
 ## Out of scope
 
-- Room occupancy / bookings ("Стаи" shows "Очаквайте скоро").
+- Room occupancy / bookings.
 - Real-time WebSockets: channels poll every few seconds; see the Reverb notes in [Channels](#channels-channels--students-only).

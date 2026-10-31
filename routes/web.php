@@ -31,9 +31,6 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Room occupancy is intentionally not built yet.
-Route::get('/rooms', fn () => Inertia::render('ComingSoon', ['section' => 'nav.rooms']))->name('rooms');
-
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

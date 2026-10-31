@@ -35,7 +35,3 @@ test('guests see the Bulgarian landing page and logged in users are redirected t
 
     $this->actingAs(User::factory()->create())->get('/')->assertRedirect(route('dashboard'));
 });
-
-test('placeholder sections render the coming soon page', function (string $path) {
-    $this->get($path)->assertOk()->assertInertia(fn (Assert $page) => $page->component('ComingSoon'));
-})->with(['/rooms']);
