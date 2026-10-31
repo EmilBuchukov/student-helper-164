@@ -35,9 +35,9 @@ const destroy = async () => {
         </template>
 
         <div>
-            <div class="mx-auto max-w-4xl space-y-6">
-                <section class="relative overflow-hidden rounded bg-sand-900 p-6 text-sand-50 sm:p-10"><div class="absolute inset-y-0 right-0 hidden w-1/3 opacity-60 sm:block" aria-hidden="true"><Azulejo /></div>
-                    <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div class="mx-auto max-w-5xl space-y-10">
+                <section class="relative overflow-hidden rounded bg-sand-900 p-6 text-sand-50 sm:p-10"><div class="absolute inset-y-0 right-0 hidden w-40 opacity-50 sm:block lg:w-56" aria-hidden="true"><Azulejo /></div>
+                    <div class="relative flex flex-wrap items-end justify-between gap-6 sm:pe-40 lg:pe-56">
                         <div class="min-w-0">
                             <p class="kicker !text-accent">{{ $t('clubs.title') }}</p><h1 class="mt-3 break-words font-display text-display font-semibold">{{ club.name }}</h1>
                             <p class="mt-3 text-sand-200">
@@ -70,7 +70,7 @@ const destroy = async () => {
                         </div>
                     </div>
                     <p v-if="$page.props.auth.user.role === 'teacher'" class="relative mt-4 text-sm text-sand-200">{{ $t('clubs.teachers_view_only') }}</p>
-                    <div v-if="club.description" class="relative mt-6 max-w-prose whitespace-pre-line break-words text-lg leading-relaxed text-sand-100">{{ club.description }}</div>
+                    <div v-if="club.description" class="relative mt-6 max-w-prose sm:pe-40 lg:pe-56 whitespace-pre-line break-words text-lg leading-relaxed text-sand-100">{{ club.description }}</div>
                 </section>
 
                 <section class="space-y-4">

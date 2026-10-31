@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import EmptyState from '@/Components/EmptyState.vue';
@@ -46,19 +47,16 @@ const dismiss = (report) => router.post(route('moderation.reports.dismiss', repo
     <Head :title="$t('moderation.title')" />
 
     <AppLayout>
-        <template #header>
-            <h1 class="font-display text-title-1 font-semibold text-ink">{{ $t('moderation.title') }}</h1>
-            <p class="mt-1 text-sm text-ink-muted">{{ $t('moderation.intro') }}</p>
-        </template>
+        <PageHeader :title="$t('moderation.title')" :lead="$t('moderation.intro')" :kicker="$t('nav.admin')" />
 
         <div>
-            <div class="mx-auto max-w-5xl space-y-4">
-                <div class="flex flex-wrap gap-3 rounded border border-line bg-surface p-4">
-                    <SelectInput v-model="filter.status" class="block w-44" @change="apply">
+            <div class="mt-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3 border-b border-line pb-6 sm:flex">
+                    <SelectInput v-model="filter.status" class="block w-full sm:w-52" :aria-label="$t('moderation.title')" @change="apply">
                         <option v-for="s in statuses" :key="s" :value="s">{{ $t(`reports.statuses.${s}`) }}</option>
                         <option value="all">{{ $t('moderation.all_statuses') }}</option>
                     </SelectInput>
-                    <SelectInput v-model="filter.type" class="block w-44" @change="apply">
+                    <SelectInput v-model="filter.type" class="block w-full sm:w-52" :aria-label="$t('moderation.all_types')" @change="apply">
                         <option value="">{{ $t('moderation.all_types') }}</option>
                         <option v-for="type in types" :key="type" :value="type">{{ $t(`moderation.types.${type}`) }}</option>
                     </SelectInput>
@@ -66,28 +64,28 @@ const dismiss = (report) => router.post(route('moderation.reports.dismiss', repo
 
                 <EmptyState v-if="reports.data.length === 0" :title="$t('moderation.empty')" />
 
-                <article v-for="report in reports.data" :key="report.id" class="rounded border border-line bg-surface p-4">
-                    <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <span class="rounded bg-sunken px-2 py-0.5 font-medium text-ink-muted">{{ $t(`moderation.types.${report.type}`) }}</span>
+                <article v-for="report in reports.data" :key="report.id" class="rounded border border-line bg-surface p-5 sm:p-6" :class="report.status === 'open' && 'shadow-[inset_4px_0_0_rgb(var(--primary))]'">
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="kicker">{{ $t(`moderation.types.${report.type}`) }}</span>
                         <span
-                            class="rounded-full px-2 py-0.5 font-medium"
+                            class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                             :class="{ 'bg-primary-soft text-primary-ink': report.status === 'open', 'bg-success-soft text-success': report.status === 'resolved', 'bg-sunken text-ink-muted': report.status === 'dismissed' }"
                         >
                             {{ $t(`reports.statuses.${report.status}`) }}
                         </span>
                         <span class="text-ink-subtle">{{ $t('moderation.reported_by', { name: report.reporter ?? $t('common.deleted_user') }) }} · {{ formatDateTime(report.created_at) }}</span>
                     </div>
-                    <p class="mt-2 break-words text-sm font-medium text-ink">„{{ report.reason }}“</p>
+                    <p class="mt-3 break-words font-display text-xl font-semibold italic text-ink">„{{ report.reason }}“</p>
 
-                    <div class="mt-3 rounded border border-line bg-sunken/60 p-3 text-sm">
+                    <div class="mt-4 border-s-2 border-line-strong bg-sunken/60 p-4 text-sm">
                         <template v-if="report.content">
                             <p v-if="report.content.title" class="break-words font-semibold text-ink">{{ report.content.title }}</p>
                             <p class="whitespace-pre-line break-words text-ink-muted">{{ report.content.text }}</p>
-                            <p class="mt-2 flex flex-wrap gap-x-3 text-xs text-ink-subtle">
+                            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-subtle">
                                 <span>{{ $t('moderation.author', { name: report.content.author ?? $t('common.deleted_user') }) }}</span>
                                 <span v-if="report.content.context">{{ $t('moderation.in_channel', { name: report.content.context }) }}</span>
                                 <span v-if="report.content.deleted" class="font-semibold text-primary-ink">{{ $t('moderation.content_deleted') }}</span>
-                                <a v-if="report.content.url && !report.content.deleted" :href="report.content.url" class="text-primary-ink hover:underline">{{ $t('moderation.open_content') }}</a>
+                                <a v-if="report.content.url && !report.content.deleted" :href="report.content.url" class="link font-medium">{{ $t('moderation.open_content') }}</a>
                             </p>
                         </template>
                         <p v-else class="text-ink-subtle">{{ $t('moderation.content_missing') }}</p>
@@ -97,7 +95,7 @@ const dismiss = (report) => router.post(route('moderation.reports.dismiss', repo
                         {{ $t('moderation.handled_by', { name: report.handler, date: formatDateTime(report.handled_at) }) }}<template v-if="report.note"> — {{ report.note }}</template>
                     </p>
 
-                    <div v-if="report.status === 'open'" class="mt-3 flex gap-2">
+                    <div v-if="report.status === 'open'" class="mt-5 flex flex-wrap gap-2">
                         <PrimaryButton type="button" @click="openResolve(report)">{{ $t('moderation.resolve') }}</PrimaryButton>
                         <SecondaryButton type="button" @click="dismiss(report)">{{ $t('moderation.dismiss') }}</SecondaryButton>
                     </div>
@@ -109,7 +107,7 @@ const dismiss = (report) => router.post(route('moderation.reports.dismiss', repo
 
         <Modal :show="active !== null" max-width="md" @close="active = null">
             <form v-if="active" class="space-y-4 p-6" @submit.prevent="resolve">
-                <h3 class="text-lg font-semibold text-ink">{{ $t('moderation.resolve_title') }}</h3>
+                <h3 class="font-display text-title-3 font-semibold text-ink">{{ $t('moderation.resolve_title') }}</h3>
                 <label v-if="active.content && !active.content.deleted" class="flex items-center gap-2 text-sm text-ink-muted">
                     <Checkbox v-model:checked="form.remove_content" />
                     {{ $t('moderation.remove_content') }}

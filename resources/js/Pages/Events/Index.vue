@@ -1,4 +1,8 @@
 <script setup>
+import { Plus } from 'lucide-vue-next';
+import Button from '@/Components/ui/Button.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
+import Skeleton from '@/Components/ui/Skeleton.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import EventCard from '@/Components/EventCard.vue';
@@ -38,34 +42,29 @@ const setPast = (value) => {
     <Head :title="$t('events.title')" />
 
     <AppLayout>
-        <template #header>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 class="font-display text-title-1 font-semibold text-ink">{{ $t('events.title') }}</h1>
-                    <p class="mt-1 text-sm text-ink-muted">{{ $t('events.intro') }}</p>
-                </div>
-                <Link v-if="can.create" :href="route('events.create')" class="rounded bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover">
-                    {{ $t('events.new') }}
-                </Link>
-            </div>
-        </template>
+        <PageHeader :title="$t('events.title')" :lead="$t('events.intro')" :kicker="$t('app.name')">
+            <template v-if="can.create" #actions>
+                <Button :href="route('events.create')"><Plus aria-hidden="true" />{{ $t('events.new') }}</Button>
+            </template>
+        </PageHeader>
 
         <div>
-            <div class="mx-auto max-w-4xl space-y-4">
-                <div class="flex flex-wrap items-end gap-3 rounded border border-line bg-surface p-4">
-                    <div class="flex rounded bg-sunken p-1">
+            <div class="mt-6 space-y-6">
+                <div class="flex flex-wrap items-end gap-4 border-b border-line pb-6">
+                    <div class="flex rounded-full border border-line bg-sunken p-1" role="group">
                         <button
                             v-for="value in [false, true]"
                             :key="String(value)"
                             type="button"
-                            class="rounded px-3 py-1 text-sm"
-                            :class="form.past === value ? 'border border-line bg-surface font-semibold ' : 'text-ink-muted'"
+                            class="min-h-10 rounded-full px-4 text-sm font-medium transition-colors duration-200"
+                            :aria-pressed="form.past === value"
+                            :class="form.past === value ? 'bg-ink text-canvas' : 'text-ink-muted hover:text-ink'"
                             @click="setPast(value)"
                         >
                             {{ value ? $t('events.past') : $t('events.upcoming') }}
                         </button>
                     </div>
-                    <label class="min-w-[12rem] flex-1 text-sm text-ink-muted">
+                    <label class="min-w-[12rem] flex-1 text-sm font-medium text-ink sm:max-w-xs">
                         {{ $t('events.club') }}
                         <SelectInput v-model="form.club" class="mt-1 block w-full" @change="apply">
                             <option value="">{{ $t('events.all') }}</option>
@@ -75,11 +74,11 @@ const setPast = (value) => {
                     </label>
                 </div>
 
-                <p v-if="loading" class="text-sm text-ink-subtle">{{ $t('common.loading') }}</p>
+                <div v-if="loading" class="space-y-3" :aria-label="$t('common.loading')"><Skeleton v-for="n in 3" :key="n" class="h-24" /></div>
                 <EmptyState v-else-if="events.data.length === 0" :title="$t('events.empty')" />
-                <div v-else class="space-y-3">
+                <TransitionGroup v-else tag="div" name="list" class="relative space-y-3">
                     <EventCard v-for="event in events.data" :key="event.id" :event="event" />
-                </div>
+                </TransitionGroup>
 
                 <Pagination :links="events.links" />
             </div>
